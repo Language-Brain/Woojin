@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>언어와 뇌 | 관리자</title>
+  <style>
+    :root{--paper:#f7f6f2;--white:#fff;--ink:#172033;--muted:#69707a;--line:#d8dce1;--navy:#173e70;--green:#477242;--violet:#765092;--danger:#9e3c38;--sans:Pretendard,"Noto Sans KR","Malgun Gothic",sans-serif;--serif:"Noto Serif KR","Hahmlet","Batang",serif}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55}button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}.shell{width:min(1240px,calc(100% - 36px));margin:auto}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--line);padding:40px;box-shadow:0 16px 50px #1c2b4020}.login-card h1{font-family:var(--serif);font-size:32px;margin:0 0 6px}.login-card p{color:var(--muted);margin:0 0 25px}.field{display:grid;gap:6px;margin-bottom:15px}.field label{font-size:13px;font-weight:800}.field input,.field textarea,.field select{width:100%;border:1px solid #bfc5cc;background:#fff;padding:11px 12px}.field textarea{min-height:100px;resize:vertical}.primary,.secondary,.danger{border:0;padding:11px 18px;font-weight:800}.primary{background:var(--navy);color:#fff}.secondary{background:#e9edf2;color:var(--ink)}.danger{background:#f6e7e5;color:var(--danger)}.wide{width:100%}.status{min-height:24px;margin:10px 0 0;font-size:13px;color:var(--danger)}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.topbar-inner{height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-family:var(--serif);font-size:23px;font-weight:800}.account{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}.account a{color:var(--navy);font-weight:800;text-decoration:none}.dashboard{padding:34px 0 70px}.intro{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:24px}.intro h1{font-family:var(--serif);font-size:32px;margin:0}.intro p{margin:3px 0 0;color:var(--muted)}.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:25px}.tab{border:0;background:none;padding:12px 17px;font-weight:800;color:var(--muted);border-bottom:3px solid transparent}.tab.active{color:var(--navy);border-color:var(--navy)}
+    .panel-grid{display:grid;grid-template-columns:410px 1fr;gap:28px;align-items:start}.card{background:#fff;border:1px solid var(--line);padding:22px}.card h2{font-family:var(--serif);font-size:22px;margin:0 0 18px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.span-2{grid-column:1/-1}.form-actions{display:flex;gap:8px;align-items:center}.form-message{font-size:13px;color:var(--green);min-height:22px;margin:8px 0 0}.list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.list-head h2{margin:0}.post-list{display:grid;gap:8px}.post-row{display:grid;grid-template-columns:65px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);padding:12px}.badge{font-size:11px;font-weight:800;padding:4px 7px;text-align:center;background:#e9eff6;color:var(--navy)}.badge.draft{background:#f1ece4;color:#7b6543}.post-row h3{font-size:15px;margin:0 0 2px}.post-row p{font-size:12px;color:var(--muted);margin:0}.row-actions{display:flex;gap:5px}.row-actions button{border:1px solid var(--line);background:#fff;padding:6px 9px;font-size:12px}.empty{padding:35px;text-align:center;color:var(--muted);border:1px dashed #c7cbd0}.inquiry-list{display:grid;gap:13px}.inquiry{background:#fff;border:1px solid var(--line);padding:19px}.inquiry-top{display:flex;justify-content:space-between;gap:20px}.inquiry h3{font-size:16px;margin:0 0 5px}.inquiry time{font-size:12px;color:var(--muted)}.inquiry textarea{width:100%;min-height:85px;border:1px solid #c4c9cf;padding:10px;margin-top:12px}.inquiry-actions{display:flex;align-items:center;gap:9px;margin-top:8px;flex-wrap:wrap}.inquiry-actions label{font-size:13px}.loading{color:var(--muted);font-size:13px}.upload-note{font-size:11px;color:var(--muted);margin-top:-8px}
+    @media(max-width:900px){.panel-grid{grid-template-columns:1fr}.editor-card{order:0}.list-card{order:1}.topbar-inner{height:auto;padding:13px 0;align-items:flex-start}.account{flex-wrap:wrap;justify-content:flex-end}}
+    @media(max-width:560px){.shell{width:min(100% - 22px,1240px)}.login-card{padding:28px 22px}.intro{display:block}.intro h1{font-size:27px}.form-grid{display:block}.post-row{grid-template-columns:55px 1fr}.row-actions{grid-column:1/-1;justify-content:flex-end}.account span{display:none}.card{padding:16px}.tabs{overflow-x:auto}.tab{white-space:nowrap}}
+  </style>
+</head>
+<body>
+  <main id="login-view" class="login">
+    <form id="login-form" class="login-card">
+      <h1>언어와 뇌 관리자</h1>
+      <p>권우진 연구 아카이브의 글과 독자 질문을 관리합니다.</p>
+      <div class="field"><label for="login-email">관리자 이메일</label><input id="login-email" type="email" value="ccuccuci@gmail.com" autocomplete="username" required></div>
+      <div class="field"><label for="login-password">비밀번호</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+      <button class="primary wide" type="submit">로그인</button>
+      <p id="login-status" class="status" role="status"></p>
+      <a href="/customer" style="font-size:13px;color:#173e70">← 방문자 홈페이지로 돌아가기</a>
+    </form>
+  </main>
+
+  <div id="admin-view" class="hidden">
+    <header class="topbar"><div class="shell topbar-inner"><div class="brand">언어와 뇌 · 관리자</div><div class="account"><span id="account-email"></span><a href="/customer" target="_blank">홈페이지 보기</a><button id="logout" class="secondary" type="button">로그아웃</button></div></div></header>
+    <main class="shell dashboard">
+      <div class="intro"><div><h1>연구 아카이브 관리</h1><p>게시물을 작성하고 독자가 남긴 질문에 답할 수 있습니다.</p></div><span id="connection-state" class="loading">저장소 확인 중</span></div>
+      <nav class="tabs" aria-label="관리 메뉴"><button class="tab active" data-panel="posts" type="button">게시물 관리</button><button class="tab" data-panel="inquiries" type="button">독자 질문</button></nav>
+
+      <section id="posts-panel" class="panel-grid">
+        <article class="card editor-card"><h2 id="post-form-title">새 게시물</h2><form id="post-form">
+          <input id="post-id" type="hidden">
+          <div class="form-grid">
+            <div class="field"><label for="post-type">게시 위치</label><select id="post-type"><option value="paper">주목할 논문</option><option value="news">뇌·인지 뉴스</option><option value="works">강의·저서·연구 원고</option></select></div>
+            <div class="field"><label for="post-status">공개 상태</label><select id="post-status"><option value="draft">임시 저장</option><option value="published">공개</option></select></div>
+            <div class="field"><label for="post-ref">자료 번호</label><input id="post-ref" required placeholder="예: 1088"></div>
+            <div class="field"><label for="post-date">게시 날짜</label><input id="post-date" type="date" required></div>
+            <div class="field"><label for="post-category">분류·출처</label><input id="post-category" placeholder="예: Brain & Cognition"></div>
+            <div class="field"><label for="post-order">정렬 순서</label><input id="post-order" type="number" value="0"></div>
+            <div class="field span-2"><label for="post-title">제목</label><input id="post-title" required></div>
+            <div class="field span-2"><label for="post-excerpt">짧은 설명</label><textarea id="post-excerpt"></textarea></div>
+            <div class="field span-2"><label for="post-academic">영문 논문명·학술 정보</label><textarea id="post-academic"></textarea></div>
+            <div class="field span-2"><label for="post-source">상세 출처</label><input id="post-source"></div>
+            <div class="field span-2"><label for="post-link">원문 링크</label><input id="post-link" type="url" placeholder="https://"></div>
+            <div class="field span-2"><label for="post-image">대표 이미지 업로드</label><input id="post-image" type="file" accept="image/*"><p class="upload-note">새 이미지를 선택하지 않으면 기존 이미지가 유지됩니다.</p></div>
+            <input id="post-image-url" type="hidden">
+          </div>
+          <div class="form-actions"><button class="primary" type="submit">저장하기</button><button id="post-reset" class="secondary" type="button">새 글</button></div><p id="post-message" class="form-message" role="status"></p>
+        </form></article>
+        <article class="card list-card"><div class="list-head"><h2>등록된 자료</h2><select id="post-filter" aria-label="게시물 분류"><option value="all">전체</option><option value="paper">주목할 논문</option><option value="news">뇌·인지 뉴스</option><option value="works">강의·저서·연구 원고</option></select></div><div id="post-list" class="post-list"><p class="loading">자료를 불러오고 있습니다.</p></div></article>
+      </section>
+
+      <section id="inquiries-panel" class="hidden"><article class="card"><div class="list-head"><h2>독자가 남긴 질문</h2><button id="refresh-inquiries" class="secondary" type="button">새로고침</button></div><div id="inquiry-list" class="inquiry-list"><p class="loading">질문을 불러오고 있습니다.</p></div></article></section>
+    </main>
+  </div>
+
+  <script src="/api/config"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const fallback={supabaseUrl:'https://vhaosgzyvoijgwryybry.supabase.co',supabasePublishableKey:'sb_publishable_Obv4RYPtgwB71vZ4vOM0iA_jxPfeuZa'};
+    const config=window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl?window.LANGUAGE_BRAIN_CONFIG:fallback;
+    const db=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
+    const loginView=document.querySelector('#login-view'),adminView=document.querySelector('#admin-view'),postList=document.querySelector('#post-list'),inquiryList=document.querySelector('#inquiry-list');
+    let currentUser=null,allPosts=[];
+
+    function showLogin(message=''){loginView.classList.remove('hidden');adminView.classList.add('hidden');document.querySelector('#login-status').textContent=message}
+    function showAdmin(){loginView.classList.add('hidden');adminView.classList.remove('hidden');document.querySelector('#account-email').textContent=currentUser.email;document.querySelector('#connection-state').textContent='Supabase 연결됨';loadPosts();loadInquiries()}
+    async function requireAdmin(user){if(!user)return false;const{data,error}=await db.from('profiles').select('role').eq('user_id',user.id).maybeSingle();return !error&&data?.role==='admin'}
+    async function initialize(){const{data:{session}}=await db.auth.getSession();if(session&&await requireAdmin(session.user)){currentUser=session.user;showAdmin()}else{if(session)await db.auth.signOut();showLogin()}}
+
+    document.querySelector('#login-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button'),status=document.querySelector('#login-status');button.disabled=true;status.textContent='로그인 확인 중입니다.';const email=document.querySelector('#login-email').value.trim(),password=document.querySelector('#login-password').value;const{data,error}=await db.auth.signInWithPassword({email,password});if(error||!await requireAdmin(data.user)){if(data.user)await db.auth.signOut();status.textContent='관리자 이메일 또는 비밀번호를 확인해 주세요.'}else{currentUser=data.user;showAdmin()}button.disabled=false});
+    document.querySelector('#logout').addEventListener('click',async()=>{await db.auth.signOut();currentUser=null;showLogin('안전하게 로그아웃했습니다.')});
+
+    function typeName(type){return type==='paper'?'논문':type==='news'?'뉴스':'원고'}
+    function escapeText(value){const span=document.createElement('span');span.textContent=value??'';return span.innerHTML}
+    async function loadPosts(){const{data,error}=await db.from('posts').select('*').order('sort_order',{ascending:false}).order('published_at',{ascending:false});if(error){postList.innerHTML='<p class="empty">자료를 불러오지 못했습니다.</p>';return}allPosts=data;renderPosts()}
+    function renderPosts(){const filter=document.querySelector('#post-filter').value,rows=filter==='all'?allPosts:allPosts.filter(post=>post.type===filter);if(!rows.length){postList.innerHTML='<p class="empty">등록된 자료가 없습니다.</p>';return}postList.innerHTML=rows.map(post=>`<article class="post-row"><span class="badge ${post.status==='draft'?'draft':''}">${post.status==='draft'?'임시':'공개'} · ${typeName(post.type)}</span><div><h3>${escapeText(post.title)}</h3><p>${escapeText(post.ref_no)} · ${escapeText(post.category)} · ${post.published_at}</p></div><div class="row-actions"><button type="button" data-edit="${post.id}">수정</button><button type="button" data-delete="${post.id}">삭제</button></div></article>`).join('')}
+    document.querySelector('#post-filter').addEventListener('change',renderPosts);
+    postList.addEventListener('click',async event=>{const edit=event.target.dataset.edit,remove=event.target.dataset.delete;if(edit){fillPost(allPosts.find(post=>post.id===edit))}if(remove&&confirm('이 게시물을 삭제할까요?')){const{error}=await db.from('posts').delete().eq('id',remove);if(!error)loadPosts()}});
+    function fillPost(post){document.querySelector('#post-form-title').textContent='게시물 수정';document.querySelector('#post-id').value=post.id;document.querySelector('#post-type').value=post.type;document.querySelector('#post-status').value=post.status;document.querySelector('#post-ref').value=post.ref_no;document.querySelector('#post-date').value=post.published_at;document.querySelector('#post-category').value=post.category;document.querySelector('#post-order').value=post.sort_order;document.querySelector('#post-title').value=post.title;document.querySelector('#post-excerpt').value=post.excerpt;document.querySelector('#post-academic').value=post.academic_info;document.querySelector('#post-source').value=post.source;document.querySelector('#post-link').value=post.link_url;document.querySelector('#post-image-url').value=post.image_url;scrollTo({top:0,behavior:'smooth'})}
+    function resetPost(){document.querySelector('#post-form').reset();document.querySelector('#post-id').value='';document.querySelector('#post-image-url').value='';document.querySelector('#post-date').value=new Date().toISOString().slice(0,10);document.querySelector('#post-form-title').textContent='새 게시물';document.querySelector('#post-message').textContent=''}
+    document.querySelector('#post-reset').addEventListener('click',resetPost);
+    async function uploadImage(file){if(!file)return document.querySelector('#post-image-url').value;const ext=file.name.split('.').pop().toLowerCase(),path=`${currentUser.id}/${Date.now()}.${ext}`;const{error}=await db.storage.from('post-images').upload(path,file,{upsert:false});if(error)throw error;return db.storage.from('post-images').getPublicUrl(path).data.publicUrl}
+    document.querySelector('#post-form').addEventListener('submit',async event=>{event.preventDefault();const message=document.querySelector('#post-message'),button=event.currentTarget.querySelector('button[type="submit"]');button.disabled=true;message.textContent='저장하고 있습니다.';try{const imageUrl=await uploadImage(document.querySelector('#post-image').files[0]);const payload={type:document.querySelector('#post-type').value,status:document.querySelector('#post-status').value,ref_no:document.querySelector('#post-ref').value.trim(),published_at:document.querySelector('#post-date').value,category:document.querySelector('#post-category').value.trim(),sort_order:Number(document.querySelector('#post-order').value)||0,title:document.querySelector('#post-title').value.trim(),excerpt:document.querySelector('#post-excerpt').value.trim(),academic_info:document.querySelector('#post-academic').value.trim(),source:document.querySelector('#post-source').value.trim(),link_url:document.querySelector('#post-link').value.trim(),image_url:imageUrl||'',created_by:currentUser.id};const id=document.querySelector('#post-id').value;const result=id?await db.from('posts').update(payload).eq('id',id):await db.from('posts').insert(payload);if(result.error)throw result.error;message.textContent='저장되었습니다.';resetPost();loadPosts()}catch(error){message.textContent=`저장하지 못했습니다: ${error.message}`}finally{button.disabled=false}});
+
+    async function loadInquiries(){const{data,error}=await db.from('inquiries').select('*').order('created_at',{ascending:false});if(error){inquiryList.innerHTML='<p class="empty">질문을 불러오지 못했습니다.</p>';return}if(!data.length){inquiryList.innerHTML='<p class="empty">아직 접수된 질문이 없습니다.</p>';return}inquiryList.innerHTML=data.map(item=>`<article class="inquiry" data-id="${item.id}"><div class="inquiry-top"><div><h3>${escapeText(item.question)}</h3><time>${new Date(item.created_at).toLocaleString('ko-KR')}</time></div><span class="badge ${item.status==='new'?'draft':''}">${item.status}</span></div><textarea aria-label="답변 내용" placeholder="답변을 작성해 주세요.">${escapeText(item.admin_reply)}</textarea><div class="inquiry-actions"><label><input type="checkbox" ${item.is_public?'checked':''}> 방문자 화면에 답변 공개</label><button class="primary" type="button" data-save>답변 저장</button><button class="secondary" type="button" data-archive>보관</button><button class="danger" type="button" data-remove>삭제</button><span class="form-message"></span></div></article>`).join('')}
+    inquiryList.addEventListener('click',async event=>{const card=event.target.closest('.inquiry');if(!card)return;const id=card.dataset.id,message=card.querySelector('.form-message');if(event.target.hasAttribute('data-save')){const reply=card.querySelector('textarea').value.trim(),isPublic=card.querySelector('input[type="checkbox"]').checked;const{error}=await db.from('inquiries').update({admin_reply:reply,is_public:isPublic,status:reply?'replied':'reviewing',replied_at:reply?new Date().toISOString():null}).eq('id',id);message.textContent=error?'저장하지 못했습니다.':'답변을 저장했습니다.';if(!error)loadInquiries()}if(event.target.hasAttribute('data-archive')){await db.from('inquiries').update({status:'archived',is_public:false}).eq('id',id);loadInquiries()}if(event.target.hasAttribute('data-remove')&&confirm('이 질문을 삭제할까요?')){await db.from('inquiries').delete().eq('id',id);loadInquiries()}});
+    document.querySelector('#refresh-inquiries').addEventListener('click',loadInquiries);
+    document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===tab));document.querySelector('#posts-panel').classList.toggle('hidden',tab.dataset.panel!=='posts');document.querySelector('#inquiries-panel').classList.toggle('hidden',tab.dataset.panel!=='inquiries')}));
+    resetPost();initialize();
+  </script>
+</body>
+</html>
