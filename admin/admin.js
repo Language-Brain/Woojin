@@ -6,6 +6,7 @@
     supabasePublishableKey: 'sb_publishable_Obv4RYPtgwB71vZ4vOM0iA_jxPfeuZa',
     siteUrl: 'https://languagebrain.vercel.app'
   };
+  const recoveryRequested = /(?:[?#&]type=recovery)/.test(location.href);
   const config = window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl ? window.LANGUAGE_BRAIN_CONFIG : fallback;
   const db = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
   const $ = selector => document.querySelector(selector);
@@ -31,6 +32,7 @@
   let autosaveTimer = null;
   let visiblePostLimit = 20;
   let toastTimer = null;
+  let passwordRecoveryMode = recoveryRequested;
 
   function showToast(message, error = false) {
     const toast = $('#toast');
@@ -51,8 +53,19 @@
 
   function showLogin(message = '') {
     $('#login-view').classList.remove('hidden');
+    $('#login-form').classList.remove('hidden');
+    $('#password-reset-form').classList.add('hidden');
     $('#admin-app').classList.add('hidden');
     $('#login-status').textContent = message;
+  }
+
+  function showPasswordReset() {
+    passwordRecoveryMode = true;
+    $('#login-view').classList.remove('hidden');
+    $('#login-form').classList.add('hidden');
+    $('#password-reset-form').classList.remove('hidden');
+    $('#admin-app').classList.add('hidden');
+    $('#new-password').focus();
   }
 
   async function requireAdmin(user) {
@@ -68,6 +81,11 @@
     }
     initEditor();
     const { data: { session } } = await db.auth.getSession();
+    if (session && passwordRecoveryMode) {
+      currentUser = session.user;
+      showPasswordReset();
+      return;
+    }
     if (session && await requireAdmin(session.user)) {
       currentUser = session.user;
       await showAdmin();
@@ -76,6 +94,10 @@
       showLogin();
     }
   }
+
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') showPasswordReset();
+  });
 
   async function showAdmin() {
     $('#login-view').classList.add('hidden');
@@ -100,6 +122,100 @@
       currentUser = data.user;
       await showAdmin();
     }
+    button.disabled = false;
+  });
+
+  $('#forgot-password').addEventListener('click', async () => {
+    const email = $('#login-email').value.trim();
+    const status = $('#login-status');
+    if (!email) {
+      status.textContent = '관리자 이메일을 먼저 입력해 주세요.';
+      return;
+    }
+    const button = $('#forgot-password');
+    button.disabled = true;
+    status.textContent = '비밀번호 재설정 메일을 보내고 있습니다.';
+    const isLocal = location.hostname === 'localhost';
+    const redirectTo = isLocal ? `${location.origin}/admin/` : `${config.siteUrl}/admin`;
+    const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error?.message?.toLowerCase().includes('rate limit')) {
+      status.textContent = '보안을 위한 메일 발송 한도에 도달했습니다. 약 한 시간 후 한 번만 다시 시도해 주세요.';
+    } else {
+      status.textContent = error
+        ? `메일을 보내지 못했습니다: ${error.message}`
+        : '재설정 메일을 보냈습니다. 메일함에서 가장 최근 링크를 눌러 주세요.';
+    }
+    button.disabled = false;
+  });
+
+  $('#password-reset-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const password = $('#new-password').value;
+    const confirmation = $('#new-password-confirm').value;
+    const status = $('#password-reset-status');
+    if (password.length < 8) {
+      status.textContent = '새 비밀번호는 8자 이상으로 정해 주세요.';
+      return;
+    }
+    if (password !== confirmation) {
+      status.textContent = '두 비밀번호가 서로 다릅니다.';
+      return;
+    }
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    button.disabled = true;
+    status.textContent = '새 비밀번호를 안전하게 저장하고 있습니다.';
+    const { data, error } = await db.auth.updateUser({ password });
+    if (error) {
+      status.textContent = `비밀번호를 변경하지 못했습니다: ${error.message}`;
+      button.disabled = false;
+      return;
+    }
+    passwordRecoveryMode = false;
+    currentUser = data.user;
+    if (!await requireAdmin(currentUser)) {
+      await db.auth.signOut();
+      showLogin('관리자 권한을 확인하지 못했습니다.');
+      return;
+    }
+    await showAdmin();
+    showToast('새 비밀번호가 저장되었습니다.');
+    button.disabled = false;
+  });
+
+  $('#open-password-change').addEventListener('click', () => {
+    $('#account-new-password').value = '';
+    $('#account-new-password-confirm').value = '';
+    $('#account-password-status').textContent = '';
+    $('#password-change-dialog').showModal();
+    $('#account-new-password').focus();
+  });
+
+  $('#close-password-change').addEventListener('click', () => $('#password-change-dialog').close());
+
+  $('#password-change-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const password = $('#account-new-password').value;
+    const confirmation = $('#account-new-password-confirm').value;
+    const status = $('#account-password-status');
+    if (password.length < 8) {
+      status.textContent = '새 비밀번호는 8자 이상으로 정해 주세요.';
+      return;
+    }
+    if (password !== confirmation) {
+      status.textContent = '두 비밀번호가 서로 다릅니다.';
+      return;
+    }
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    button.disabled = true;
+    status.textContent = '새 비밀번호를 안전하게 저장하고 있습니다.';
+    const { error } = await db.auth.updateUser({ password });
+    if (error) {
+      status.textContent = `비밀번호를 변경하지 못했습니다: ${error.message}`;
+      button.disabled = false;
+      return;
+    }
+    $('#password-change-dialog').close();
+    showToast('새 비밀번호가 저장되었습니다.');
     button.disabled = false;
   });
 

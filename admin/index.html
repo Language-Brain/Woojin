@@ -17,8 +17,18 @@
       <div class="field"><label for="login-email">관리자 이메일</label><input id="login-email" type="email" value="ccuccuci@gmail.com" autocomplete="username" required></div>
       <div class="field"><label for="login-password">비밀번호</label><input id="login-password" type="password" autocomplete="current-password" required></div>
       <button class="button primary wide" type="submit">로그인</button>
+      <button id="forgot-password" class="text-button login-help" type="button">비밀번호를 잊으셨나요?</button>
       <p id="login-status" class="form-status" role="status" aria-live="polite"></p>
       <a class="back-link" href="/customer">← 공개 홈페이지로 돌아가기</a>
+    </form>
+    <form id="password-reset-form" class="login-card hidden">
+      <p class="login-kicker">SECURE PASSWORD RESET</p>
+      <h1>새 비밀번호 설정</h1>
+      <p>새 비밀번호를 두 번 입력해 주세요. 비밀번호는 이 기기에서 Supabase로 안전하게 전송되며 관리자 화면이나 코드에 저장되지 않습니다.</p>
+      <div class="field"><label for="new-password">새 비밀번호</label><input id="new-password" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div class="field"><label for="new-password-confirm">새 비밀번호 확인</label><input id="new-password-confirm" type="password" autocomplete="new-password" minlength="8" required></div>
+      <button class="button primary wide" type="submit">새 비밀번호 저장</button>
+      <p id="password-reset-status" class="form-status" role="status" aria-live="polite"></p>
     </form>
   </main>
 
@@ -42,6 +52,7 @@
       </nav>
       <div class="side-bottom">
         <a href="/customer" target="_blank" rel="noopener">↗ 공개 홈페이지 보기</a>
+        <button id="open-password-change" type="button">비밀번호 변경</button>
         <button id="logout" type="button">로그아웃</button>
         <small id="account-email"></small>
       </div>
@@ -123,6 +134,18 @@
   </div>
 
   <dialog id="preview-dialog" class="preview-dialog"><div class="preview-toolbar"><strong>공개 화면 미리보기</strong><button id="close-preview" class="icon-button" type="button" aria-label="미리보기 닫기">×</button></div><article id="preview-content" class="article-preview"></article></dialog>
+  <dialog id="password-change-dialog" class="account-dialog">
+    <form id="password-change-form" method="dialog">
+      <div class="preview-toolbar"><strong>관리자 비밀번호 변경</strong><button id="close-password-change" class="icon-button" type="button" aria-label="비밀번호 변경 닫기">×</button></div>
+      <div class="account-dialog-body">
+        <p>새 비밀번호를 두 번 입력해 주세요. 현재 관리자 인증이 유효한 동안에만 변경할 수 있습니다.</p>
+        <div class="field"><label for="account-new-password">새 비밀번호</label><input id="account-new-password" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="field"><label for="account-new-password-confirm">새 비밀번호 확인</label><input id="account-new-password-confirm" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="button primary wide" type="submit">새 비밀번호 저장</button>
+        <p id="account-password-status" class="form-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/api/config"></script>
