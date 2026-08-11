@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="언어와 문해 연구실의 연구 소개와 원고">
+  <title>글 읽기 | 언어와 문해 연구실</title>
+  <style>
+    :root{--paper:#fbfaf7;--ink:#172033;--muted:#68717d;--navy:#173e70;--line:#dce0e4;--sans:Pretendard,"Noto Sans KR","Malgun Gothic",sans-serif;--serif:"Noto Serif KR","Hahmlet","Batang",serif}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.8}a{color:var(--navy)}.wrap{width:min(960px,calc(100% - 40px));margin:auto}.site-head{height:66px;border-bottom:1px solid var(--line);background:#fff}.site-head .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}.brand{font:700 21px var(--serif);text-decoration:none;color:var(--ink)}.back{font-size:13px;font-weight:700;text-decoration:none}.article-head{padding:72px 0 46px;border-bottom:1px solid var(--line)}.eyebrow{color:var(--navy);font-size:12px;font-weight:800;letter-spacing:.12em}.article-head h1{font:700 clamp(36px,6vw,64px)/1.3 var(--serif);letter-spacing:-.03em;margin:12px 0}.subtitle{font-size:22px;color:#4f5b68}.excerpt{font-size:18px;color:#4f5b68;max-width:760px}.meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px}.hero{display:block;width:100%;max-height:570px;object-fit:cover;margin:42px 0 0}.article-body{padding:55px 0 90px;font-size:18px}.article-body h1,.article-body h2,.article-body h3{font-family:var(--serif);line-height:1.45;margin:1.7em 0 .65em}.article-body h1{font-size:36px}.article-body h2{font-size:30px}.article-body h3{font-size:24px}.article-body p{margin:.9em 0}.article-body blockquote{border-left:4px solid var(--navy);margin:1.5em 0;padding:12px 20px;background:#f1f4f7}.article-body img{display:block;max-width:100%;height:auto;margin:30px auto}.article-body ul,.article-body ol{padding-left:1.5em}.article-body a{word-break:break-all}.source-box{margin-top:50px;padding:20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px}.tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:30px}.tag{background:#eaf0f7;color:var(--navy);padding:5px 10px;border-radius:20px;font-size:12px}.state{padding:100px 20px;text-align:center;color:var(--muted)}footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}@media(max-width:600px){.wrap{width:min(100% - 28px,960px)}.article-head{padding:48px 0 35px}.article-head h1{font-size:38px}.article-body{padding:38px 0 65px;font-size:17px}.article-body h1{font-size:30px}.article-body h2{font-size:26px}}
+  </style>
+</head>
+<body>
+  <header class="site-head"><div class="wrap"><a class="brand" href="/customer">언어와 뇌</a><a class="back" href="/customer">← 연구실 홈</a></div></header>
+  <main id="article"><div class="state">글을 불러오고 있습니다.</div></main>
+  <footer><div class="wrap">© 2026 언어와 뇌 연구실 · 읽고, 쓰고, 듣고, 말하는 삶을 연구합니다.</div></footer>
+  <script src="/api/config"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+  <script>
+    (()=>{
+      const fallback={supabaseUrl:'https://vhaosgzyvoijgwryybry.supabase.co',supabasePublishableKey:'sb_publishable_Obv4RYPtgwB71vZ4vOM0iA_jxPfeuZa'};
+      const config=window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl?window.LANGUAGE_BRAIN_CONFIG:fallback;
+      const db=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
+      const id=new URLSearchParams(location.search).get('id');
+      const typeLabels={paper:'해외 연구 소개',works:'글과 해설',news:'언어와 뇌 뉴스',notice:'공지',other:'기타'};
+      const escapeText=value=>{const node=document.createElement('span');node.textContent=value??'';return node.innerHTML};
+      async function recordView(postId){
+        if(['localhost','127.0.0.1','::1'].includes(location.hostname)||new URLSearchParams(location.search).has('qa'))return;
+        const{data:{session}}=await db.auth.getSession();
+        if(session)return;
+        let visitor=localStorage.getItem('language-brain-visitor');
+        if(!visitor){visitor=crypto.randomUUID();localStorage.setItem('language-brain-visitor',visitor)}
+        await db.rpc('record_post_view',{target_post:postId,visitor});
+      }
+      async function load(){
+        if(!id){document.querySelector('#article').innerHTML='<div class="state">글 주소가 올바르지 않습니다.</div>';return}
+        const{data,error}=await db.from('posts').select('id,type,category,title,subtitle,excerpt,content_html,academic_info,source,image_url,image_alt,link_url,tags,published_at,updated_at').eq('id',id).eq('status','published').maybeSingle();
+        if(error||!data){document.querySelector('#article').innerHTML='<div class="state"><h1>글을 찾을 수 없습니다.</h1><p>비공개 상태이거나 주소가 변경되었을 수 있습니다.</p><a href="/customer">연구실 홈으로 돌아가기</a></div>';return}
+        document.title=`${data.title} | 언어와 문해 연구실`;
+        const body=data.content_html?DOMPurify.sanitize(data.content_html):`<p>${escapeText(data.excerpt||'본문을 준비하고 있습니다.')}</p>`;
+        document.querySelector('#article').innerHTML=`<header class="article-head"><div class="wrap"><p class="eyebrow">${escapeText(typeLabels[data.type]||data.type)}${data.category?` · ${escapeText(data.category)}`:''}</p><h1>${escapeText(data.title)}</h1>${data.subtitle?`<p class="subtitle">${escapeText(data.subtitle)}</p>`:''}${data.excerpt?`<p class="excerpt">${escapeText(data.excerpt)}</p>`:''}<div class="meta"><time>${escapeText(data.published_at||'')}</time><span>최근 수정 ${escapeText(new Date(data.updated_at).toLocaleDateString('ko-KR'))}</span></div>${data.image_url?`<img class="hero" src="${escapeText(data.image_url)}" alt="${escapeText(data.image_alt||'')}">`:''}</div></header><article class="wrap article-body">${body}${data.academic_info||data.source||data.link_url?`<div class="source-box">${data.academic_info?`<p><strong>학술 정보</strong><br>${escapeText(data.academic_info)}</p>`:''}${data.source?`<p><strong>출처</strong><br>${escapeText(data.source)}</p>`:''}${data.link_url?`<p><a href="${escapeText(data.link_url)}" target="_blank" rel="noopener noreferrer">원문 자료 보기 →</a></p>`:''}</div>`:''}${data.tags?.length?`<div class="tags">${data.tags.map(tag=>`<span class="tag">#${escapeText(tag)}</span>`).join('')}</div>`:''}</article>`;
+        recordView(data.id);
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

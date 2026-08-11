@@ -6,7 +6,7 @@
   "rewrites": [
     { "source": "/customer", "destination": "/customer/index.html" },
     { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/:path*", "destination": "/admin/index.html" }
+    { "source": "/article", "destination": "/article/index.html" }
   ],
   "headers": [
     {
