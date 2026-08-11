@@ -24,6 +24,7 @@
   let categories = [];
   let mediaAssets = [];
   let viewRows = [];
+  let videos = [];
   let currentPost = null;
   let featuredFile = null;
   let quill = null;
@@ -103,7 +104,7 @@
     $('#login-view').classList.add('hidden');
     $('#admin-app').classList.remove('hidden');
     $('#account-email').textContent = currentUser.email;
-    await Promise.all([loadCategories(), loadPosts(), loadMedia(), loadViews(), loadInquiries()]);
+    await Promise.all([loadCategories(), loadPosts(), loadMedia(), loadViews(), loadInquiries(), loadVideos()]);
     renderDashboard();
     navigate('dashboard');
   }
@@ -229,7 +230,11 @@
 
   function navigate(view) {
     $$('.view').forEach(section => section.classList.toggle('active-view', section.dataset.viewSection === view));
-    $$('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
+    $$('.nav-item').forEach(button => {
+      const selectedType = view === 'posts' ? $('#filter-type')?.value : '';
+      const active = button.dataset.view === view && (view !== 'posts' || (button.dataset.postType || 'all') === selectedType);
+      button.classList.toggle('active', active);
+    });
     $('#sidebar').classList.remove('open');
     $('#menu-toggle').setAttribute('aria-expanded', 'false');
     if (view === 'editor' && !currentPost) resetEditor();
@@ -237,15 +242,19 @@
     if (view === 'categories') renderCategories();
     if (view === 'media') renderMedia();
     if (view === 'stats') renderStats();
+    if (view === 'videos') renderVideos();
+    if (view === 'posts') $('#post-management-title').textContent = ({ paper: '논문 관리', news: '뉴스 관리', works: '연구 원고 관리' })[$('#filter-type').value] || '글 관리';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   $$('.nav-item').forEach(button => button.addEventListener('click', () => {
     if (dirty && button.dataset.view !== 'editor' && !confirm('저장하지 않은 변경 내용이 있습니다. 다른 화면으로 이동할까요?')) return;
+    if (button.dataset.postType) $('#filter-type').value = button.dataset.postType;
+    else if (button.dataset.view === 'posts') $('#filter-type').value = 'all';
     navigate(button.dataset.view);
   }));
   $$('[data-go]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.go)));
-  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { resetEditor(); navigate('editor'); }));
+  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { const preferred=$('#filter-type')?.value; resetEditor(); if(['paper','news','works'].includes(preferred))$('#post-type').value=preferred; navigate('editor'); }));
   $('#menu-toggle').addEventListener('click', () => {
     const open = $('#sidebar').classList.toggle('open');
     $('#menu-toggle').setAttribute('aria-expanded', String(open));
@@ -360,7 +369,21 @@
       image_url: $('#post-image-url').value,
       image_alt: $('#post-image-alt').value.trim(),
       tags: $('#post-tags').value.split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 20),
-      published_at: $('#post-date').value || today()
+      published_at: $('#post-date').value || today(),
+      home_featured: $('#post-home-featured').checked,
+      home_order: Number($('#post-home-order').value) || 0,
+      content_subtype: $('#post-subtype').value,
+      original_title: $('#post-original-title').value.trim(),
+      authors: $('#post-authors').value.trim(),
+      publication_year: Number($('#post-publication-year').value) || null,
+      journal: $('#post-journal').value.trim(),
+      bibliographic_info: $('#post-bibliographic').value.trim(),
+      doi: $('#post-doi').value.trim(),
+      research_method: $('#post-method').value.trim(),
+      key_results: $('#post-results').value.trim(),
+      importance: $('#post-importance').value.trim(),
+      publisher: $('#post-publisher').value.trim(),
+      article_date: $('#post-article-date').value || null
     };
   }
 
@@ -437,6 +460,8 @@
     $('#post-date').value = today();
     $('#post-type').value = 'works';
     $('#post-category').value = '';
+    $('#post-home-featured').checked = true;
+    $('#post-home-order').value = '0';
     quill?.setContents([]);
     setFeaturedPreview('');
     $('#editor-mode').textContent = '새 글';
@@ -462,7 +487,21 @@
       image_url: draft.image_url ?? post.image_url,
       image_alt: draft.image_alt ?? post.image_alt ?? '',
       tags: draft.tags ?? post.tags ?? [],
-      published_at: draft.published_at ?? post.published_at
+      published_at: draft.published_at ?? post.published_at,
+      home_featured: draft.home_featured ?? post.home_featured ?? true,
+      home_order: draft.home_order ?? post.home_order ?? 0,
+      content_subtype: draft.content_subtype ?? post.content_subtype ?? '',
+      original_title: draft.original_title ?? post.original_title ?? '',
+      authors: draft.authors ?? post.authors ?? '',
+      publication_year: draft.publication_year ?? post.publication_year ?? '',
+      journal: draft.journal ?? post.journal ?? '',
+      bibliographic_info: draft.bibliographic_info ?? post.bibliographic_info ?? '',
+      doi: draft.doi ?? post.doi ?? '',
+      research_method: draft.research_method ?? post.research_method ?? '',
+      key_results: draft.key_results ?? post.key_results ?? '',
+      importance: draft.importance ?? post.importance ?? '',
+      publisher: draft.publisher ?? post.publisher ?? '',
+      article_date: draft.article_date ?? post.article_date ?? ''
     };
   }
 
@@ -485,6 +524,20 @@
     $('#post-image-alt').value = working.image_alt;
     $('#post-tags').value = (working.tags || []).join(', ');
     $('#post-date').value = working.published_at || today();
+    $('#post-home-featured').checked = working.home_featured;
+    $('#post-home-order').value = working.home_order;
+    $('#post-subtype').value = working.content_subtype;
+    $('#post-original-title').value = working.original_title;
+    $('#post-authors').value = working.authors;
+    $('#post-publication-year').value = working.publication_year;
+    $('#post-journal').value = working.journal;
+    $('#post-bibliographic').value = working.bibliographic_info;
+    $('#post-doi').value = working.doi;
+    $('#post-method').value = working.research_method;
+    $('#post-results').value = working.key_results;
+    $('#post-importance').value = working.importance;
+    $('#post-publisher').value = working.publisher;
+    $('#post-article-date').value = working.article_date;
     $('#post-ref').value = post.ref_no;
     quill.clipboard.dangerouslyPasteHTML(DOMPurify.sanitize(working.content_html || ''));
     setFeaturedPreview(working.image_url, working.image_alt);
@@ -519,6 +572,8 @@
     const { data, error } = await db.from('posts').select('*').order('updated_at', { ascending: false });
     if (error) { showToast(`글을 불러오지 못했습니다: ${error.message}`, true); return; }
     allPosts = data || [];
+    const related=$('#video-related-post');
+    if(related) related.innerHTML='<option value="">연결 안 함</option>'+allPosts.filter(post=>post.status!=='trashed').map(post=>`<option value="${post.id}">${escapeText(post.title)}</option>`).join('');
     renderPostTable();
     renderDashboard();
   }
@@ -543,10 +598,13 @@
 
   function renderPostTable() {
     if (!$('#post-table-body')) return;
+    const selectedType=$('#filter-type').value;
+    $('#post-management-title').textContent=({paper:'논문 관리',news:'뉴스 관리',works:'연구 원고 관리'})[selectedType]||'글 관리';
+    $$('.nav-item[data-view="posts"]').forEach(button=>button.classList.toggle('active',(button.dataset.postType||'all')===selectedType));
     const rows = filteredPosts();
     $('#post-count').textContent = allPosts.length ? allPosts.length : '';
     const visible = rows.slice(0, visiblePostLimit);
-    $('#post-table-body').innerHTML = visible.map(post => `<tr><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(statusLabels[post.status] || post.status)}</span></td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $('#post-table-body').innerHTML = visible.map(post => `<tr><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(statusLabels[post.status] || post.status)}</span></td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
   }
@@ -571,6 +629,7 @@
     if (action === 'restore') changes = { status: 'draft', deleted_at: null };
     if (action === 'unpublish') changes = { status: 'draft' };
     if (action === 'publish') changes = { status: 'published', published_at: today() };
+    if (action === 'toggle-home') changes = { home_featured: !allPosts.find(post => post.id === id)?.home_featured };
     if (!changes) return;
     const { error } = await db.from('posts').update(changes).eq('id', id);
     if (error) showToast(error.message, true); else { await loadPosts(); showToast(action === 'trash' ? '휴지통으로 옮겼습니다.' : '상태를 변경했습니다.'); }
@@ -715,6 +774,145 @@
       if (!error) loadInquiries();
     }
     if (event.target.hasAttribute('data-inquiry-archive')) { await db.from('inquiries').update({ status: 'archived', is_public: false }).eq('id', card.dataset.id); loadInquiries(); }
+  });
+
+  function extractYouTubeId(value) {
+    try {
+      const url = new URL(value.trim());
+      const host = url.hostname.replace(/^www\./, '');
+      let id = '';
+      if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || '';
+      if (['youtube.com', 'm.youtube.com'].includes(host)) {
+        id = url.searchParams.get('v') || '';
+        if (!id) {
+          const parts = url.pathname.split('/').filter(Boolean);
+          if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || '';
+        }
+      }
+      return /^[A-Za-z0-9_-]{11}$/.test(id) && !/^VIDEO_ID_/i.test(id) ? id : '';
+    } catch { return ''; }
+  }
+
+  function updateVideoPreview() {
+    const id = extractYouTubeId($('#video-url').value);
+    const state = $('#video-url-state');
+    if (!id) {
+      state.textContent = $('#video-url').value ? '올바른 YouTube 또는 Shorts 주소를 입력해 주세요.' : '주소를 입력하면 영상 ID와 썸네일을 확인합니다.';
+      state.classList.toggle('invalid-url', Boolean($('#video-url').value));
+      $('#video-preview').innerHTML = '<span>미리보기 없음</span>';
+      return '';
+    }
+    state.textContent = `확인된 영상 ID: ${id}`;
+    state.classList.remove('invalid-url');
+    const image = $('#video-custom-image').value.trim() || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    $('#video-preview').innerHTML = `<img src="${escapeText(image)}" alt="등록할 동영상 썸네일">`;
+    return id;
+  }
+
+  async function loadVideos() {
+    const { data, error } = await db.from('videos').select('*').order('home_order').order('updated_at', { ascending: false });
+    if (error) {
+      videos = [];
+      if ($('#video-list')) $('#video-list').innerHTML = `<div class="empty-state">동영상 테이블을 불러오지 못했습니다. 마이그레이션 적용 상태를 확인해 주세요.</div>`;
+      return;
+    }
+    videos = data || [];
+    renderVideos();
+  }
+
+  function resetVideoForm() {
+    $('#video-form').reset();
+    $('#video-id').value = '';
+    $('#video-date').value = today();
+    $('#video-order').value = '0';
+    $('#video-form-title').textContent = '새 동영상';
+    $('#video-message').textContent = '';
+    $('#video-preview').innerHTML = '<span>미리보기 없음</span>';
+    $('#video-url-state').textContent = '주소를 입력하면 영상 ID와 썸네일을 확인합니다.';
+    $('#video-url-state').classList.remove('invalid-url');
+  }
+
+  function openVideoForm(row = null) {
+    resetVideoForm();
+    $('#video-form').classList.remove('hidden');
+    if (!row) return $('#video-title').focus();
+    $('#video-id').value = row.id;
+    $('#video-title').value = row.title;
+    $('#video-description').value = row.description;
+    $('#video-url').value = row.youtube_url;
+    $('#video-category').value = row.category;
+    $('#video-date').value = row.published_at || today();
+    $('#video-related-post').value = row.related_post_id || '';
+    $('#video-order').value = row.home_order || 0;
+    $('#video-custom-image').value = row.custom_image_url || '';
+    $('#video-published').checked = row.status === 'published';
+    $('#video-home').checked = row.home_featured;
+    $('#video-form-title').textContent = '동영상 수정';
+    updateVideoPreview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function filteredVideos() {
+    const q = $('#video-search').value.trim().toLowerCase();
+    const status = $('#video-filter-status').value;
+    return videos.filter(row => (!q || `${row.title} ${row.description}`.toLowerCase().includes(q)) && (status === 'all' || status === 'active' && row.status !== 'trashed' || row.status === status));
+  }
+
+  function renderVideos() {
+    if (!$('#video-list')) return;
+    const rows = filteredVideos();
+    $('#video-list').innerHTML = rows.map(row => {
+      const image = row.custom_image_url || row.thumbnail_url || (row.youtube_id ? `https://i.ytimg.com/vi/${row.youtube_id}/hqdefault.jpg` : '');
+      return `<article class="video-admin-card" data-video-id="${row.id}">${image ? `<img src="${escapeText(image)}" alt="">` : '<div class="thumb-state">없음</div>'}<div><h3>${escapeText(row.title)}${row.home_featured ? '<span class="home-badge">홈</span>' : ''}</h3><p>${escapeText(row.youtube_url || 'YouTube 주소 미등록')}</p><p>${escapeText(row.category || '주제 없음')} · 순서 ${row.home_order} · ${escapeText(row.published_at || '')}</p><span class="status-badge status-${row.status}">${escapeText(statusLabels[row.status] || row.status)}</span></div><div class="row-actions">${row.status === 'trashed' ? `<button class="button small secondary" data-video-action="restore" type="button">복구</button>` : `<button class="button small ghost" data-video-action="edit" type="button">수정</button><button class="button small ghost" data-video-action="preview" type="button">미리보기</button><button class="button small secondary" data-video-action="toggle-publish" type="button">${row.status === 'published' ? '비공개' : '공개'}</button><button class="button small secondary" data-video-action="toggle-home" type="button">${row.home_featured ? '홈에서 내리기' : '홈에 표시'}</button><button class="button small danger" data-video-action="trash" type="button">휴지통</button>`}</div></article>`;
+    }).join('');
+    $('#video-empty').classList.toggle('hidden', rows.length > 0);
+  }
+
+  $('#new-video').addEventListener('click', () => openVideoForm());
+  $('#video-cancel').addEventListener('click', () => $('#video-form').classList.add('hidden'));
+  $('#video-url').addEventListener('input', updateVideoPreview);
+  $('#video-custom-image').addEventListener('input', updateVideoPreview);
+  $('#video-search').addEventListener('input', renderVideos);
+  $('#video-filter-status').addEventListener('input', renderVideos);
+  $('#video-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const youtubeId = updateVideoPreview();
+    const message = $('#video-message');
+    if (!youtubeId) return message.textContent = '유효한 YouTube 주소가 필요합니다.';
+    const currentId = $('#video-id').value;
+    const wantsHome = $('#video-home').checked;
+    const wantsPublished = $('#video-published').checked;
+    if (wantsHome && !wantsPublished) return message.textContent = '홈 화면 표시는 공개 동영상에서만 선택할 수 있습니다.';
+    const featuredCount = videos.filter(row => row.status === 'published' && row.home_featured && row.id !== currentId).length;
+    if (wantsHome && featuredCount >= 6) return message.textContent = '홈 화면에는 최대 6개만 표시할 수 있습니다. 기존 영상 하나를 먼저 홈에서 내려 주세요.';
+    const payload = { title: $('#video-title').value.trim(), description: $('#video-description').value.trim(), youtube_url: $('#video-url').value.trim(), youtube_id: youtubeId, thumbnail_url: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`, custom_image_url: $('#video-custom-image').value.trim(), category: $('#video-category').value.trim(), related_post_id: $('#video-related-post').value || null, status: wantsPublished ? 'published' : 'draft', home_featured: wantsHome, home_order: Number($('#video-order').value) || 0, published_at: $('#video-date').value || today(), created_by: currentUser.id };
+    const result = currentId ? await db.from('videos').update(payload).eq('id', currentId) : await db.from('videos').insert(payload);
+    if (result.error) return message.textContent = `저장하지 못했습니다: ${result.error.message}`;
+    $('#video-form').classList.add('hidden');
+    await loadVideos();
+    showToast('동영상 정보를 저장했습니다.');
+  });
+
+  $('#video-list').addEventListener('click', async event => {
+    const action = event.target.dataset.videoAction;
+    if (!action) return;
+    const id = event.target.closest('[data-video-id]').dataset.videoId;
+    const row = videos.find(item => item.id === id);
+    if (!row) return;
+    if (action === 'edit') return openVideoForm(row);
+    if (action === 'preview') return window.open(row.status === 'published' ? `/video?id=${encodeURIComponent(id)}` : row.youtube_url, '_blank', 'noopener');
+    if (action === 'trash' && !confirm('이 동영상을 휴지통으로 옮길까요? 나중에 복구할 수 있습니다.')) return;
+    let changes;
+    if (action === 'restore') changes = { status: 'draft', deleted_at: null, home_featured: false };
+    if (action === 'trash') changes = { status: 'trashed', deleted_at: new Date().toISOString(), home_featured: false };
+    if (action === 'toggle-publish') changes = row.status === 'published' ? { status: 'draft', home_featured: false } : { status: 'published' };
+    if (action === 'toggle-home') {
+      if (row.status !== 'published') return showToast('먼저 동영상을 공개해 주세요.', true);
+      if (!row.home_featured && videos.filter(item => item.status === 'published' && item.home_featured).length >= 6) return showToast('홈 화면에는 최대 6개만 표시할 수 있습니다.', true);
+      changes = { home_featured: !row.home_featured };
+    }
+    const { error } = await db.from('videos').update(changes).eq('id', id);
+    if (error) showToast(error.message, true); else { await loadVideos(); showToast('동영상 상태를 변경했습니다.'); }
   });
 
   resetCategory();

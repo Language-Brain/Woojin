@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>자료실 | 언어와 문해 연구실</title>
+  <meta name="description" content="언어와 뇌, 문해와 인지에 관한 연구 자료실">
+  <link rel="stylesheet" href="/archive/archive.css">
+</head>
+<body>
+  <a class="skip" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="wrap header-inner"><a class="brand" href="/customer">언어와 뇌</a><nav aria-label="자료실"><a href="/papers">논문</a><a href="/news">뉴스</a><a href="/works">원고</a><a href="/videos">동영상</a></nav></div></header>
+  <main id="main" class="wrap">
+    <section class="archive-hero"><a class="back" href="/customer">← 홈으로 돌아가기</a><p id="eyebrow" class="eyebrow">RESEARCH ARCHIVE</p><h1 id="archive-title">자료실</h1><p id="archive-description">자료를 불러오는 중입니다.</p></section>
+    <section class="filters" aria-label="자료 검색과 정렬">
+      <label class="search"><span>검색</span><input id="search" type="search" placeholder="제목 또는 저자 검색"></label>
+      <label><span>주제</span><select id="topic"><option value="all">모든 주제</option></select></label>
+      <label><span>정렬</span><select id="sort"><option value="new">최신순</option><option value="old">오래된순</option></select></label>
+    </section>
+    <p id="result-count" class="result-count" aria-live="polite"></p>
+    <section id="archive-list" class="archive-grid" aria-live="polite"></section>
+    <div id="empty" class="empty" hidden>조건에 맞는 공개 자료가 없습니다.</div>
+    <button id="load-more" class="load-more" type="button" hidden>더 불러오기</button>
+  </main>
+  <footer><div class="wrap">© 2026 언어와 뇌 연구실 · 읽고, 쓰고, 듣고, 말하는 삶을 연구합니다.</div></footer>
+  <script src="/api/config"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/archive/archive.js"></script>
+</body>
+</html>
