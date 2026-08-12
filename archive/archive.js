@@ -30,7 +30,9 @@
   function render(){
     const q=$('#search').value.trim().toLowerCase(),topic=$('#topic').value,old=$('#sort').value==='old';
     let filtered=rows.filter(r=>{const hay=kind==='papers'?`${r.title} ${r.original_title} ${r.authors}`:`${r.title} ${r.description||r.excerpt||''}`;return(!q||hay.toLowerCase().includes(q))&&(topic==='all'||r.category===topic)});
-    filtered.sort((a,b)=>(old?1:-1)*String(a.published_at||a.article_date||a.created_at).localeCompare(String(b.published_at||b.article_date||b.created_at)));
+    filtered.sort((a,b)=>kind==='videos'
+      ? (old?-1:1)*((Number(a.home_order)||0)-(Number(b.home_order)||0))
+      : (old?1:-1)*String(a.published_at||a.article_date||a.created_at).localeCompare(String(b.published_at||b.article_date||b.created_at)));
     $('#archive-list').innerHTML=filtered.slice(0,visible).map(card).join(''); $('#result-count').textContent=`공개 자료 ${filtered.length}건`; $('#empty').hidden=filtered.length>0; $('#load-more').hidden=filtered.length<=visible;
   }
   async function load(){

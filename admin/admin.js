@@ -908,7 +908,7 @@
     const wantsPublished = $('#video-published').checked;
     if (wantsHome && !wantsPublished) return message.textContent = '홈 화면 표시는 공개 동영상에서만 선택할 수 있습니다.';
     const featuredCount = videos.filter(row => row.status === 'published' && row.home_featured && row.id !== currentId).length;
-    if (wantsHome && featuredCount >= 6) return message.textContent = '홈 화면에는 최대 6개만 표시할 수 있습니다. 기존 영상 하나를 먼저 홈에서 내려 주세요.';
+    if (wantsHome && featuredCount >= 8) return message.textContent = '홈 화면에는 최대 8개만 표시할 수 있습니다. 기존 영상 하나를 먼저 홈에서 내려 주세요.';
     const payload = { title: $('#video-title').value.trim(), description: $('#video-description').value.trim(), youtube_url: $('#video-url').value.trim(), youtube_id: youtubeId, thumbnail_url: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`, custom_image_url: $('#video-custom-image').value.trim(), category: $('#video-category').value.trim(), related_post_id: $('#video-related-post').value || null, status: wantsPublished ? 'published' : 'draft', home_featured: wantsHome, home_order: Number($('#video-order').value) || 0, published_at: $('#video-date').value || today(), created_by: currentUser.id };
     const result = currentId ? await db.from('videos').update(payload).eq('id', currentId) : await db.from('videos').insert(payload);
     if (result.error) return message.textContent = `저장하지 못했습니다: ${result.error.message}`;
@@ -932,7 +932,7 @@
     if (action === 'toggle-publish') changes = row.status === 'published' ? { status: 'draft', home_featured: false } : { status: 'published' };
     if (action === 'toggle-home') {
       if (row.status !== 'published') return showToast('먼저 동영상을 공개해 주세요.', true);
-      if (!row.home_featured && videos.filter(item => item.status === 'published' && item.home_featured).length >= 6) return showToast('홈 화면에는 최대 6개만 표시할 수 있습니다.', true);
+      if (!row.home_featured && videos.filter(item => item.status === 'published' && item.home_featured).length >= 8) return showToast('홈 화면에는 최대 8개만 표시할 수 있습니다.', true);
       changes = { home_featured: !row.home_featured };
     }
     const { error } = await db.from('videos').update(changes).eq('id', id);
