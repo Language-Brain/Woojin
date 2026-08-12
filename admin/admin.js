@@ -264,7 +264,7 @@
     navigate(button.dataset.view);
   }));
   $$('[data-go]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.go)));
-  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { const preferred=$('#filter-type')?.value; resetEditor(); if(['paper','news','works'].includes(preferred))$('#post-type').value=preferred; navigate('editor'); }));
+  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { const preferred=$('#filter-type')?.value; resetEditor(); if(['paper','news','works'].includes(preferred))$('#post-type').value=preferred; updateResearchFields(); navigate('editor'); }));
   $('#menu-toggle').addEventListener('click', () => {
     const open = $('#sidebar').classList.toggle('open');
     $('#menu-toggle').setAttribute('aria-expanded', String(open));
@@ -370,6 +370,42 @@
     box.replaceChildren(img);
   }
 
+  function cleanExternalUrl(value, label = '주소') {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    let url;
+    try { url = new URL(raw); } catch { throw new Error(`${label} 형식을 확인해 주세요.`); }
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`${label}는 http 또는 https 주소만 사용할 수 있습니다.`);
+    [...url.searchParams.keys()].forEach(key => {
+      if (/^utm_/i.test(key) || ['fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key.toLowerCase())) url.searchParams.delete(key);
+    });
+    return url.toString();
+  }
+
+  function normalizeDoiUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const id = raw.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '').trim();
+    if (/^10\.\d{4,9}\/[\S]+$/i.test(id)) return `https://doi.org/${id}`;
+    throw new Error('DOI 주소는 10.1000/... 또는 https://doi.org/10.1000/... 형식으로 입력해 주세요.');
+  }
+
+  function updateResearchFields() {
+    const isPaper = $('#post-type').value === 'paper';
+    $('#paper-simple-fields').classList.toggle('hidden', !isPaper);
+    $('#legacy-research-fields').classList.toggle('hidden', isPaper);
+    $('#research-fields-title').textContent = isPaper ? '논문 정보' : '자료실 상세 정보';
+    $('#post-date-label').textContent = isPaper ? '홈페이지 공개일' : '작성·공개일';
+    $('#post-date-help').textContent = isPaper ? '논문 발표 연도가 아니라 이 홈페이지에 공개할 날짜입니다.' : '홈페이지에 표시할 날짜입니다.';
+  }
+
+  function generateRefNo(type) {
+    const refs = allPosts.filter(post => post.type === type).map(post => String(post.ref_no || '')).filter(ref => /^\d+$/.test(ref));
+    const width = Math.max(4, ...refs.map(ref => ref.length));
+    const next = Math.max(0, ...refs.map(Number)) + 1;
+    return String(next).padStart(width, '0');
+  }
+
   function collectWorking() {
     return {
       type: $('#post-type').value,
@@ -398,7 +434,10 @@
       key_results: $('#post-results').value.trim(),
       importance: $('#post-importance').value.trim(),
       publisher: $('#post-publisher').value.trim(),
-      article_date: $('#post-article-date').value || null
+      article_date: $('#post-article-date').value || null,
+      citation: $('#post-citation').value.trim(),
+      doi_url: normalizeDoiUrl($('#post-doi-url').value),
+      full_text_url: cleanExternalUrl($('#post-full-text-url').value, '논문 전문 주소')
     };
   }
 
@@ -408,7 +447,9 @@
 
   async function savePost(mode = 'draft') {
     if (saving) return;
-    let working = collectWorking();
+    let working;
+    try { working = collectWorking(); }
+    catch (error) { if (mode !== 'autosave') showToast(error.message, true); setSaveState('입력 확인 필요', 'error'); return; }
     if (!working.title) {
       if (mode !== 'autosave') showToast('제목을 입력해 주세요.', true);
       return;
@@ -426,7 +467,7 @@
       }
       let id = $('#post-id').value;
       let result;
-      if (!$('#post-ref').value.trim()) $('#post-ref').value = String(Date.now()).slice(-10);
+      if (!$('#post-ref').value.trim()) $('#post-ref').value = generateRefNo(working.type);
       if (id) {
         const existing = allPosts.find(post => post.id === id) || currentPost;
         if (existing?.status === 'published' && mode !== 'publish') {
@@ -487,6 +528,7 @@
     $('#current-status').textContent = '새 글';
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
     $('#unpublish-post').classList.add('hidden');
+    updateResearchFields();
     dirty = false;
     setSaveState('저장 준비');
   }
@@ -520,7 +562,10 @@
       key_results: draft.key_results ?? post.key_results ?? '',
       importance: draft.importance ?? post.importance ?? '',
       publisher: draft.publisher ?? post.publisher ?? '',
-      article_date: draft.article_date ?? post.article_date ?? ''
+      article_date: draft.article_date ?? post.article_date ?? '',
+      citation: draft.citation ?? post.citation ?? '',
+      doi_url: draft.doi_url ?? post.doi_url ?? (post.type === 'paper' ? post.doi ?? '' : ''),
+      full_text_url: draft.full_text_url ?? post.full_text_url ?? (post.type === 'paper' ? post.link_url ?? '' : '')
     };
   }
 
@@ -557,6 +602,9 @@
     $('#post-importance').value = working.importance;
     $('#post-publisher').value = working.publisher;
     $('#post-article-date').value = working.article_date;
+    $('#post-citation').value = working.citation;
+    $('#post-doi-url').value = working.doi_url;
+    $('#post-full-text-url').value = working.full_text_url;
     $('#post-ref').value = post.ref_no;
     quill.clipboard.dangerouslyPasteHTML(DOMPurify.sanitize(working.content_html || ''));
     setFeaturedPreview(working.image_url, working.image_alt);
@@ -564,6 +612,7 @@
     dirty = false;
     setSaveState('저장됨', 'saved');
     updateEditorStatus(post);
+    updateResearchFields();
     navigate('editor');
   }
 
@@ -580,11 +629,15 @@
   });
 
   function renderPreview() {
-    const working = collectWorking();
+    let working;
+    try { working = collectWorking(); } catch (error) { showToast(error.message, true); return; }
+    const citationPreview = working.type === 'paper' && (working.citation || working.doi_url || working.full_text_url) ? `<section class="source-box"><h2>[논문 정보]</h2>${working.citation ? `<p>${escapeText(working.citation)}</p>` : ''}<p>${working.doi_url ? `<a href="${escapeText(working.doi_url)}" target="_blank" rel="noopener noreferrer">DOI</a>` : ''}${working.doi_url && working.full_text_url ? ' · ' : ''}${working.full_text_url ? `<a href="${escapeText(working.full_text_url)}" target="_blank" rel="noopener noreferrer">논문 전문</a>` : ''}</p></section>` : '';
     $('#preview-content').innerHTML = `${working.image_url ? `<img class="preview-hero" src="${escapeText(working.image_url)}" alt="${escapeText(working.image_alt)}">` : ''}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>`;
+    $('#preview-content').insertAdjacentHTML('beforeend', citationPreview);
     $('#preview-dialog').showModal();
   }
   $('#preview-post').addEventListener('click', renderPreview);
+  $('#post-type').addEventListener('change', updateResearchFields);
   $('#close-preview').addEventListener('click', () => $('#preview-dialog').close());
 
   async function loadPosts() {
