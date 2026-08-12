@@ -7,8 +7,8 @@
     siteUrl: 'https://languagebrain.vercel.app'
   };
   const recoveryRequested = /(?:[?#&]type=recovery)/.test(location.href);
-  const config = window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl ? window.LANGUAGE_BRAIN_CONFIG : fallback;
-  const db = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
+  const config = window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl && window.LANGUAGE_BRAIN_CONFIG?.supabasePublishableKey ? window.LANGUAGE_BRAIN_CONFIG : fallback;
+  const db = window.supabase?.createClient(config.supabaseUrl, config.supabasePublishableKey);
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
   const today = () => new Date().toISOString().slice(0, 10);
@@ -76,6 +76,11 @@
   }
 
   async function initialize() {
+    if (!db) {
+      showLogin('온라인 저장소 설정을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.');
+      $('#login-form').querySelector('button[type="submit"]').disabled = true;
+      return;
+    }
     if (!window.Quill || !window.DOMPurify) {
       showLogin('편집 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.');
       return;
@@ -96,8 +101,13 @@
     }
   }
 
-  db.auth.onAuthStateChange((event) => {
+  db?.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') showPasswordReset();
+    if (event === 'SIGNED_OUT' && currentUser) {
+      currentUser = null;
+      dirty = false;
+      showLogin('로그인 시간이 만료되었습니다. 다시 로그인해 주세요.');
+    }
   });
 
   async function showAdmin() {
@@ -136,7 +146,7 @@
     const button = $('#forgot-password');
     button.disabled = true;
     status.textContent = '비밀번호 재설정 메일을 보내고 있습니다.';
-    const isLocal = location.hostname === 'localhost';
+    const isLocal = ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
     const redirectTo = isLocal ? `${location.origin}/admin/` : `${config.siteUrl}/admin`;
     const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
     if (error?.message?.toLowerCase().includes('rate limit')) {
@@ -312,7 +322,12 @@
     if (uploadError) throw uploadError;
     const publicUrl = db.storage.from('post-images').getPublicUrl(path).data.publicUrl;
     const { error: metaError } = await db.from('media_assets').insert({ path, file_name: file.name, public_url: publicUrl, alt_text: altText, mime_type: file.type, size_bytes: file.size, created_by: currentUser.id });
-    if (metaError) console.warn('이미지 메타데이터 저장 실패', metaError.message);
+    if (metaError) {
+      console.error('이미지 메타데이터 저장 실패', metaError.message);
+      const { error: cleanupError } = await db.storage.from('post-images').remove([path]);
+      if (cleanupError) console.error('미완료 이미지 정리 실패', cleanupError.message);
+      throw new Error('이미지 정보까지 저장하지 못했습니다. 다시 시도해 주세요.');
+    }
     return { publicUrl, path };
   }
 
@@ -399,6 +414,7 @@
       return;
     }
     saving = true;
+    ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = true; });
     setSaveState(mode === 'autosave' ? '자동 저장 중…' : '저장 중…', 'saving');
     try {
       if (featuredFile) {
@@ -435,7 +451,10 @@
     } catch (error) {
       setSaveState('저장 실패', 'error');
       if (mode !== 'autosave') showToast(`저장하지 못했습니다: ${error.message}`, true);
-    } finally { saving = false; }
+    } finally {
+      saving = false;
+      ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = false; });
+    }
   }
 
   $('#save-draft').addEventListener('click', () => savePost('draft'));
@@ -628,7 +647,12 @@
     if (action === 'trash') changes = { status: 'trashed', deleted_at: new Date().toISOString() };
     if (action === 'restore') changes = { status: 'draft', deleted_at: null };
     if (action === 'unpublish') changes = { status: 'draft' };
-    if (action === 'publish') changes = { status: 'published', published_at: today() };
+    if (action === 'publish') {
+      const post = allPosts.find(item => item.id === id);
+      // 공개 글을 편집 초안으로 저장한 뒤 목록에서 다시 공개하는 경우에도
+      // 이전 공개본이 아니라 최신 working_content를 정식 공개 열에 반영합니다.
+      changes = { ...workingFromPost(post), status: 'published', published_at: post?.working_content?.published_at || post?.published_at || today() };
+    }
     if (action === 'toggle-home') changes = { home_featured: !allPosts.find(post => post.id === id)?.home_featured };
     if (!changes) return;
     const { error } = await db.from('posts').update(changes).eq('id', id);
