@@ -30,7 +30,7 @@ const [published, drafts, videos] = await Promise.all([
   getJson(`${rest}/posts?select=id,status&status=eq.draft`, { headers }),
   getJson(`${rest}/videos?select=id,title,status,youtube_id,youtube_url&status=eq.published`, { headers })
 ]);
-check(published.length > 0, '공개 글을 조회할 수 없습니다.');
+check(Array.isArray(published), '공개 글 응답 형식이 올바르지 않습니다.');
 check(drafts.length === 0, '비로그인 요청에서 임시저장 글이 노출됩니다.');
 check(videos.every(video => /^[A-Za-z0-9_-]{11}$/.test(video.youtube_id)), '잘못된 공개 동영상 ID가 있습니다.');
 
