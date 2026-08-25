@@ -2,3 +2,5 @@
 @media(max-width:900px){.archive-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}}@media(max-width:620px){.wrap{width:min(100% - 28px,1180px)}.site-header nav{gap:12px}.site-header nav a{font-size:12px}.archive-hero{padding-top:38px}.filters{grid-template-columns:1fr}.search{grid-column:auto}.archive-grid{grid-template-columns:1fr}.archive-card{padding:20px 0}.archive-card h2{font-size:21px}}
 
 [data-archive-kind="works"] .archive-grid{grid-template-columns:1fr}[data-archive-kind="works"] .archive-card h2{font-size:32px;line-height:1.35;word-break:keep-all;overflow-wrap:break-word;margin-top:0}[data-archive-kind="works"] .archive-card h2 a{display:block}[data-archive-kind="works"] .archive-card h2 a[data-type]:before{content:"[" attr(data-type) "] ";color:var(--navy);font-family:var(--sans);font-size:.58em;font-weight:800;letter-spacing:-.02em;white-space:nowrap;vertical-align:.12em}@media(max-width:620px){[data-archive-kind="works"] .archive-card h2{font-size:29px;line-height:1.35}}
+
+@media(max-width:900px){[data-archive-kind="works"] .archive-card h2{font-size:29px;line-height:1.35}}
