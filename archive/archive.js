@@ -13,9 +13,16 @@
     videos:{type:'video',title:'동영상',eyebrow:'VIDEO ARCHIVE',description:'언어와 뇌, 문해교육의 질문을 짧고 선명하게 살펴보는 영상 자료실입니다.'}
   }[kind];
   document.body.dataset.archiveKind=kind;
+  const canonicalUrl=`https://languagebrain.vercel.app/${kind}`;
+  document.title=`${settings.title} | 언어와 뇌`;
+  document.querySelector('meta[name="description"]').content=settings.description;
+  document.querySelector('#canonical').href=canonicalUrl;
+  document.querySelector('#og-title').content=`${settings.title} | 언어와 뇌`;
+  document.querySelector('#og-description').content=settings.description;
+  document.querySelector('#og-url').content=canonicalUrl;
   const $=s=>document.querySelector(s); const esc=v=>{const n=document.createElement('span');n.textContent=v??'';return n.innerHTML};
   let rows=[],visible=12;
-  document.title=`${settings.title} | 언어와 문해 연구실`; $('#archive-title').textContent=settings.title; $('#eyebrow').textContent=settings.eyebrow; $('#archive-description').textContent=settings.description;
+  $('#archive-title').textContent=settings.title; $('#eyebrow').textContent=settings.eyebrow; $('#archive-description').textContent=settings.description;
   $('#search').placeholder=kind==='papers'?'제목·원문 제목·저자 검색':'제목 또는 설명 검색';
   const date=v=>v?new Date(`${v}T00:00:00`).toLocaleDateString('ko-KR'):'날짜 없음';
   function detailUrl(row){return kind==='videos'?`/video?id=${encodeURIComponent(row.id)}`:`/article?id=${encodeURIComponent(row.id)}`}

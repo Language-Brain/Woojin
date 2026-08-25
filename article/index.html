@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <header class="site-head"><div class="wrap"><a class="brand" href="/customer">언어와 뇌</a><a class="back" href="/customer">← 연구실 홈</a></div></header>
+  <header class="site-head"><div class="wrap"><a class="brand" href="/">언어와 뇌</a><a class="back" href="/">← 연구실 홈</a></div></header>
   <main id="article"><div class="state">글을 불러오고 있습니다.</div></main>
   <footer><div class="wrap">© 2026 언어와 뇌 연구실 · 읽고, 쓰고, 듣고, 말하는 삶을 연구합니다.</div></footer>
   <script src="/api/config"></script>
@@ -50,7 +50,7 @@
       async function load(){
         if(!id){document.querySelector('#article').innerHTML='<div class="state">글 주소가 올바르지 않습니다.</div>';return}
         const{data,error}=await db.from('posts').select('*').eq('id',id).eq('status','published').maybeSingle();
-        if(error||!data){document.querySelector('#article').innerHTML='<div class="state"><h1>글을 찾을 수 없습니다.</h1><p>비공개 상태이거나 주소가 변경되었을 수 있습니다.</p><a href="/customer">연구실 홈으로 돌아가기</a></div>';return}
+        if(error||!data){document.querySelector('#article').innerHTML='<div class="state"><h1>글을 찾을 수 없습니다.</h1><p>비공개 상태이거나 주소가 변경되었을 수 있습니다.</p><a href="/">연구실 홈으로 돌아가기</a></div>';return}
         document.title=`${data.title} | 언어와 문해 연구실`;
         const body=data.content_html?DOMPurify.sanitize(data.content_html):`<p>${escapeText(data.excerpt||'본문을 준비하고 있습니다.')}</p>`;
         const paperInfo=data.type==='paper'?[['원문 제목',data.original_title],['저자',data.authors],['발표 연도',data.publication_year],['학술지',data.journal],['권·호·쪽수',data.bibliographic_info],['DOI',data.doi],['연구 방법·자료',data.research_method],['주요 결과',data.key_results],['이 연구가 중요한 이유',data.importance]]:[];

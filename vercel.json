@@ -1,12 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": { "api/article.js": { "includeFiles": "article/index.html" } },
   "redirects": [
-    { "source": "/", "destination": "/customer", "permanent": false }
+    { "source": "/customer", "destination": "/", "permanent": true },
+    { "source": "/customer/index.html", "destination": "/", "permanent": true },
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/article/index.html", "destination": "/article", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/customer", "destination": "/customer/index.html" },
+    { "source": "/", "destination": "/customer/index.html" },
     { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/article", "destination": "/article/index.html" },
+    { "source": "/article", "destination": "/api/article" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/rss.xml", "destination": "/api/rss" },
     { "source": "/papers", "destination": "/archive/index.html" },
     { "source": "/news", "destination": "/archive/index.html" },
     { "source": "/works", "destination": "/archive/index.html" },
@@ -14,6 +20,13 @@
     { "source": "/video", "destination": "/video/index.html" }
   ],
   "headers": [
+    {
+      "source": "/admin",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
     {
       "source": "/admin/:path*",
       "headers": [
