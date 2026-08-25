@@ -12,6 +12,7 @@
     works:{type:'works',title:'강의·저서·연구 원고',eyebrow:'WORKS ARCHIVE',description:'연구에서 출발해 교육과 삶으로 이어지는 강의, 저서, 연구 원고를 모았습니다.'},
     videos:{type:'video',title:'동영상',eyebrow:'VIDEO ARCHIVE',description:'언어와 뇌, 문해교육의 질문을 짧고 선명하게 살펴보는 영상 자료실입니다.'}
   }[kind];
+  document.body.dataset.archiveKind=kind;
   const $=s=>document.querySelector(s); const esc=v=>{const n=document.createElement('span');n.textContent=v??'';return n.innerHTML};
   let rows=[],visible=12;
   document.title=`${settings.title} | 언어와 문해 연구실`; $('#archive-title').textContent=settings.title; $('#eyebrow').textContent=settings.eyebrow; $('#archive-description').textContent=settings.description;
@@ -25,7 +26,8 @@
     }
     const meta=kind==='papers'?[row.authors,row.publication_year,row.journal||row.source].filter(Boolean).join(' · '):kind==='news'?[row.publisher||row.source,date(row.article_date||row.published_at)].filter(Boolean).join(' · '):[row.content_subtype||row.source,date(row.published_at)].filter(Boolean).join(' · ');
     const external=kind==='news'&&row.link_url?`<a href="${esc(row.link_url)}" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>`:'';
-    return `<article class="archive-card">${row.image_url?`<a href="${detailUrl(row)}"><img class="card-image" src="${esc(row.image_url)}" alt="${esc(row.image_alt||row.title)}" loading="lazy"></a>`:''}<span class="card-kicker">${esc(row.category||settings.title)}</span><h2><a href="${detailUrl(row)}">${esc(row.title)}</a></h2><p class="card-meta">${esc(meta)}</p><p class="card-summary">${esc(row.excerpt||row.subtitle||'상세 내용을 준비하고 있습니다.')}</p><div class="card-actions"><a href="${detailUrl(row)}">자세히 보기 →</a>${external}</div></article>`;
+    const workMatch=String(row.title||'').match(/^\[([^\]]+)\]\s*(.*)$/),workType=workMatch?.[1]||row.content_subtype||row.category||row.source||'칼럼',workTitle=workMatch?.[2]||row.title;
+    return `<article class="archive-card">${row.image_url?`<a href="${detailUrl(row)}"><img class="card-image" src="${esc(row.image_url)}" alt="${esc(row.image_alt||row.title)}" loading="lazy"></a>`:''}${kind==='works'?'':`<span class="card-kicker">${esc(row.category||settings.title)}</span>`}<h2><a href="${detailUrl(row)}"${kind==='works'?` data-type="${esc(workType)}"`:''}>${esc(kind==='works'?workTitle:row.title)}</a></h2><p class="card-meta">${esc(meta)}</p><p class="card-summary">${esc(row.excerpt||row.subtitle||'상세 내용을 준비하고 있습니다.')}</p><div class="card-actions"><a href="${detailUrl(row)}">자세히 보기 →</a>${external}</div></article>`;
   }
   function render(){
     const q=$('#search').value.trim().toLowerCase(),topic=$('#topic').value,old=$('#sort').value==='old';
