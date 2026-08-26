@@ -1,8 +1,7 @@
-import { readFile } from 'node:fs/promises';
+import articleTemplate from './article-template.js';
 import { SITE_DESCRIPTION, SITE_URL, descriptionFor, escapeHtml, publicArticleUrl, supabaseRows } from './_seo.js';
 
 const TYPE_LABELS = { paper: '해외 연구 소개', news: '언어와 뇌 뉴스', works: '글과 해설' };
-const templateUrl = new URL('./article-template.html', import.meta.url);
 
 function safeContent(value) {
   return String(value || '')
@@ -38,7 +37,7 @@ export default async function handler(request, response) {
       response.setHeader('X-Robots-Tag', 'noindex, nofollow');
       return response.status(404).send('<!doctype html><html lang="ko"><meta charset="utf-8"><title>글을 찾을 수 없습니다</title><p>비공개 상태이거나 존재하지 않는 글입니다.</p>');
     }
-    let html = await readFile(templateUrl, 'utf8');
+    let html = articleTemplate;
     const canonical = publicArticleUrl(post.id);
     const description = descriptionFor(post);
     const image = post.image_url || `${SITE_URL}/og-image.webp`;
