@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { SITE_DESCRIPTION, SITE_URL, descriptionFor, escapeHtml, publicArticleUrl, supabaseRows } from './_seo.js';
 
 const TYPE_LABELS = { paper: '해외 연구 소개', news: '언어와 뇌 뉴스', works: '글과 해설' };
-const templateUrl = new URL('../article/index.html', import.meta.url);
+const templateUrl = new URL('./article-template.html', import.meta.url);
 
 function safeContent(value) {
   return String(value || '')

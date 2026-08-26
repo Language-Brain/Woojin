@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": { "api/article.js": { "includeFiles": "article/index.html" } },
+  "functions": { "api/article.js": { "includeFiles": "api/article-template.html" } },
   "redirects": [
     { "source": "/customer", "destination": "/", "permanent": true },
     { "source": "/customer/index.html", "destination": "/", "permanent": true },
