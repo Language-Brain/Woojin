@@ -32,13 +32,26 @@ function articleImages(post) {
     { url: second.url, alt: second.alt || post.title }
   ].filter(image => image.url);
 }
+function recommendedIdsFromContent(content) {
+  const match = String(content || '').match(/<!--languagebrain-recommendations:([^>]*)-->/);
+  if (!match) return [];
+  try { return JSON.parse(decodeURIComponent(match[1])).filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 5); }
+  catch { return []; }
+}
+
+function renderRecommendations(rows) {
+  if (!rows?.length) return '';
+  return `<section class="recommendations" aria-labelledby="recommendations-heading"><h2 id="recommendations-heading">함께 읽으면 좋은 글</h2><ul>${rows.map(row => `<li><a href="${publicArticleUrl(row.id)}">${escapeHtml(row.title)}</a></li>`).join('')}</ul></section>`;
+}
 function renderArticle(post) {
   const type = TYPE_LABELS[post.type] || '연구 글';
   const body = post.content_html ? safeContent(post.content_html) : `<p>${escapeHtml(post.excerpt || '본문을 준비하고 있습니다.')}</p>`;
   const tags = post.tags?.length ? `<div class="tags">${post.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>` : '';
   const images = articleImages(post);
-  const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}">`).join('')}</div>` : '';
-  return `<header class="article-head"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div>${gallery}</div></header><article class="wrap article-body">${body}${tags}${shareMarkup()}</article>`;
+  const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" draggable="false">`).join('')}</div>` : '';
+  const copyright = '<p class="copyright-notice">© 권우진. 무단 복제 및 재배포를 금합니다.</p>';
+  const recommendations = renderRecommendations(post.recommendedPosts);
+  return `<header class="article-head protected-content"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div>${gallery}</div></header><article class="wrap article-body protected-content">${body}${tags}${copyright}${recommendations}${shareMarkup()}</article>`;
 }
 
 export default async function handler(request, response) {
@@ -55,6 +68,14 @@ export default async function handler(request, response) {
       response.setHeader('X-Robots-Tag', 'noindex, nofollow');
       return response.status(404).send('<!doctype html><html lang="ko"><meta charset="utf-8"><title>글을 찾을 수 없습니다</title><p>비공개 상태이거나 존재하지 않는 글입니다.</p>');
     }
+    const recommendationIds = recommendedIdsFromContent(post.content_html);
+    let recommendedPosts = [];
+    if (recommendationIds.length) {
+      const rows = await supabaseRows('posts', `select=id,title,status&id=in.(${recommendationIds.join(',')})&status=eq.published`);
+      const byId = new Map(rows.map(row => [row.id, row]));
+      recommendedPosts = recommendationIds.map(id => byId.get(id)).filter(Boolean);
+    }
+    post.recommendedPosts = recommendedPosts;
     let html = articleTemplate;
     const canonical = publicArticleUrl(post.id);
     const description = descriptionFor(post);

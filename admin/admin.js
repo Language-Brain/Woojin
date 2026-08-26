@@ -272,6 +272,12 @@
   });
 
   function initEditor() {
+    const Font = Quill.import('formats/font');
+    Font.whitelist = ['noto-sans', 'nanum-gothic', 'nanum-myeongjo', 'noto-serif', 'system-sans', 'system-serif'];
+    Quill.register(Font, true);
+    const Size = Quill.import('attributors/class/size');
+    Size.whitelist = ['body', 'large', 'xlarge'];
+    Quill.register(Size, true);
     const BaseImage = Quill.import('formats/image');
     class AccessibleImage extends BaseImage {
       static create(value) {
@@ -295,7 +301,18 @@
         history: { delay: 900, maxStack: 200, userOnly: true }
       }
     });
-    quill.on('text-change', (_delta, _old, source) => { if (source === 'user') markDirty(); });
+    function updateColorIndicators() {
+      const format = quill.getFormat();
+      const color = format.color || '#172033';
+      const background = format.background || '#ffffff';
+      const colorLabel = document.querySelector('.ql-color .ql-picker-label');
+      const backgroundLabel = document.querySelector('.ql-background .ql-picker-label');
+      if (colorLabel) { colorLabel.style.backgroundColor = color; colorLabel.style.borderColor = '#8f98a4'; colorLabel.title = `글자색: ${color}`; }
+      if (backgroundLabel) { backgroundLabel.style.background = `linear-gradient(135deg, ${background} 0 70%, #fff 70%)`; backgroundLabel.style.borderColor = '#8f98a4'; backgroundLabel.title = `강조색: ${background}`; }
+    }
+    quill.on('text-change', (_delta, _old, source) => { if (source === 'user') markDirty(); updateColorIndicators(); });
+    quill.on('selection-change', updateColorIndicators);
+    updateColorIndicators();
   }
 
   function markDirty() {
@@ -306,7 +323,7 @@
   }
 
   $('#post-form').addEventListener('input', event => {
-    if (!['post-image', 'post-image-2'].includes(event.target.id)) markDirty();
+    if (!['post-image', 'post-image-2', 'recommendation-search', 'recommendation-candidate'].includes(event.target.id)) markDirty();
   });
   window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 
@@ -428,6 +445,54 @@
     return String(next).padStart(width, '0');
   }
 
+  function selectedRecommendationIds() {
+    return $$('#recommendation-list [data-recommendation-id]').map(item => item.dataset.recommendationId);
+  }
+
+  function renderRecommendationCandidates() {
+    const selected = new Set(selectedRecommendationIds());
+    const search = $('#recommendation-search').value.trim().toLowerCase();
+    const currentId = $('#post-id').value;
+    const candidates = allPosts
+      .filter(post => post.status === 'published' && post.id !== currentId && !selected.has(post.id))
+      .filter(post => !search || post.title.toLowerCase().includes(search))
+      .sort((a, b) => String(b.published_at || b.updated_at).localeCompare(String(a.published_at || a.updated_at)));
+    $('#recommendation-candidate').innerHTML = '<option value="">공개 글을 선택하세요</option>' + candidates.map(post => `<option value="${post.id}">${escapeText(post.title)}</option>`).join('');
+  }
+
+  function renderRecommendations(ids = []) {
+    const unique = [...new Set((ids || []).filter(Boolean))].slice(0, 5);
+    const list = $('#recommendation-list');
+    list.innerHTML = unique.length ? unique.map((id, index) => {
+      const post = allPosts.find(item => item.id === id);
+      const title = post?.title || '삭제되었거나 찾을 수 없는 글';
+      return `<li data-recommendation-id="${escapeText(id)}"><span>${escapeText(title)}</span><div><button type="button" data-recommendation-action="up" aria-label="위로 이동" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-recommendation-action="down" aria-label="아래로 이동" ${index === unique.length - 1 ? 'disabled' : ''}>↓</button><button type="button" data-recommendation-action="remove" aria-label="추천에서 삭제">삭제</button></div></li>`;
+    }).join('') : '<li class="recommendation-empty">선택한 추천 글이 없습니다.</li>';
+    $('#recommendation-count').textContent = `${unique.length}/5`;
+    renderRecommendationCandidates();
+  }
+
+  $('#recommendation-search').addEventListener('input', renderRecommendationCandidates);
+  $('#add-recommendation').addEventListener('click', () => {
+    const id = $('#recommendation-candidate').value;
+    if (!id) return;
+    const ids = selectedRecommendationIds();
+    if (ids.length >= 5 || ids.includes(id)) return;
+    renderRecommendations([...ids, id]);
+    markDirty();
+  });
+  $('#recommendation-list').addEventListener('click', event => {
+    const button = event.target.closest('[data-recommendation-action]');
+    const item = event.target.closest('[data-recommendation-id]');
+    if (!button || !item) return;
+    const ids = selectedRecommendationIds();
+    const index = ids.indexOf(item.dataset.recommendationId);
+    if (button.dataset.recommendationAction === 'remove') ids.splice(index, 1);
+    if (button.dataset.recommendationAction === 'up' && index > 0) [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
+    if (button.dataset.recommendationAction === 'down' && index < ids.length - 1) [ids[index + 1], ids[index]] = [ids[index], ids[index + 1]];
+    renderRecommendations(ids);
+    markDirty();
+  });
   function collectWorking() {
     return {
       type: $('#post-type').value,
@@ -443,6 +508,7 @@
       image_alt: $('#post-image-alt').value.trim(),
       image_url_2: $('#post-image-url-2').value,
       image_alt_2: $('#post-image-alt-2').value.trim(),
+      recommended_posts: selectedRecommendationIds(),
       tags: $('#post-tags').value.split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 20),
       published_at: $('#post-date').value || today(),
       home_featured: $('#post-home-featured').checked,
@@ -482,10 +548,31 @@
     const encoded = encodeURIComponent(JSON.stringify({ url, alt: alt || '' }));
     return `<!--languagebrain-image-2:${encoded}-->${clean}`;
   }
-  function canonicalPayload(working, status) {
-    const { image_url_2, image_alt_2, ...canonical } = working;
+  const recommendationPattern = /<!--languagebrain-recommendations:([^>]*)-->/;
+
+  function recommendationsFromContent(content) {
+    const match = String(content || '').match(recommendationPattern);
+    if (!match) return [];
+    try { return JSON.parse(decodeURIComponent(match[1])).filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 5); }
+    catch { return []; }
+  }
+
+  function contentWithRecommendations(content, ids) {
+    const clean = String(content || '').replace(recommendationPattern, '');
+    const safeIds = [...new Set(ids || [])].filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 5);
+    if (!safeIds.length) return clean;
+    return `<!--languagebrain-recommendations:${encodeURIComponent(JSON.stringify(safeIds))}-->${clean}`;
+  }
+
+  function buildCanonicalPayload(working, status, refNo, createdBy) {
+    const { image_url_2, image_alt_2, recommended_posts, ...canonical } = working;
     canonical.content_html = contentWithSecondImage(canonical.content_html, image_url_2, image_alt_2);
-    return { ...canonical, status, ref_no: $('#post-ref').value.trim(), working_content: working, created_by: currentUser.id };
+    canonical.content_html = contentWithRecommendations(canonical.content_html, recommended_posts);
+    return { ...canonical, status, ref_no: refNo, working_content: working, created_by: createdBy };
+  }
+
+  function canonicalPayload(working, status) {
+    return buildCanonicalPayload(working, status, $('#post-ref').value.trim(), currentUser.id);
   }
 
   async function savePost(mode = 'draft') {
@@ -573,6 +660,7 @@
     $('#post-form').reset();
     $('#post-id').value = '';
     $('#post-image-url').value = '';
+    $('#post-image-url-2').value = '';
     $('#post-date').value = today();
     $('#post-type').value = 'works';
     $('#post-category').value = '';
@@ -581,6 +669,7 @@
     quill?.setContents([]);
     setFeaturedPreview(1, '');
     setFeaturedPreview(2, '');
+    renderRecommendations([]);
     $('#editor-mode').textContent = '새 글';
     $('#current-status').textContent = '새 글';
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
@@ -593,6 +682,7 @@
   function workingFromPost(post) {
     const draft = post.working_content && Object.keys(post.working_content).length ? post.working_content : {};
     const publishedSecondImage = secondImageFromContent(post.content_html);
+    const publishedRecommendations = recommendationsFromContent(post.content_html);
     return {
       type: draft.type ?? post.type,
       category: draft.category ?? post.category,
@@ -607,6 +697,7 @@
       image_alt: draft.image_alt ?? post.image_alt ?? '',
       image_url_2: draft.image_url_2 ?? publishedSecondImage.url,
       image_alt_2: draft.image_alt_2 ?? publishedSecondImage.alt,
+      recommended_posts: draft.recommended_posts ?? publishedRecommendations,
       tags: draft.tags ?? post.tags ?? [],
       published_at: draft.published_at ?? post.published_at,
       home_featured: draft.home_featured ?? post.home_featured ?? true,
@@ -672,6 +763,7 @@
     quill.clipboard.dangerouslyPasteHTML(DOMPurify.sanitize(working.content_html || ''));
     setFeaturedPreview(1, working.image_url, working.image_alt);
     setFeaturedPreview(2, working.image_url_2, working.image_alt_2);
+    renderRecommendations(working.recommended_posts);
     $('#editor-mode').textContent = '글 수정';
     dirty = false;
     setSaveState('저장됨', 'saved');
@@ -698,7 +790,9 @@
     const citationPreview = working.type === 'paper' && (working.citation || working.doi_url || working.full_text_url) ? `<section class="source-box"><h2>[논문 정보]</h2>${working.citation ? `<p>${escapeText(working.citation)}</p>` : ''}<p>${working.doi_url ? `<a href="${escapeText(working.doi_url)}" target="_blank" rel="noopener noreferrer">DOI</a>` : ''}${working.doi_url && working.full_text_url ? ' · ' : ''}${working.full_text_url ? `<a href="${escapeText(working.full_text_url)}" target="_blank" rel="noopener noreferrer">논문 전문</a>` : ''}</p></section>` : '';
     const previewImages = [[working.image_url, working.image_alt], [working.image_url_2, working.image_alt_2]].filter(([url]) => url);
     const previewGallery = previewImages.length ? `<div class="preview-image-gallery ${previewImages.length === 2 ? 'double' : 'single'}">${previewImages.map(([url, alt]) => `<img src="${escapeText(url)}" alt="${escapeText(alt)}">`).join('')}</div>` : '';
-    $('#preview-content').innerHTML = `${previewGallery}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>`;
+    const recommendedPreviewRows = working.recommended_posts.map(id => allPosts.find(post => post.id === id)).filter(post => post?.status === 'published');
+    const recommendationPreview = recommendedPreviewRows.length ? `<section class="preview-recommendations"><h2>함께 읽으면 좋은 글</h2><ul>${recommendedPreviewRows.map(post => `<li>${escapeText(post.title)}</li>`).join('')}</ul></section>` : '';
+    $('#preview-content').innerHTML = `${previewGallery}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>${recommendationPreview}`;
     $('#preview-content').insertAdjacentHTML('beforeend', citationPreview);
     $('#preview-dialog').showModal();
   }
@@ -710,6 +804,7 @@
     const { data, error } = await db.from('posts').select('*').order('updated_at', { ascending: false });
     if (error) { showToast(`글을 불러오지 못했습니다: ${error.message}`, true); return; }
     allPosts = data || [];
+    renderRecommendationCandidates();
     const related=$('#video-related-post');
     if(related) related.innerHTML='<option value="">연결 안 함</option>'+allPosts.filter(post=>post.status!=='trashed').map(post=>`<option value="${post.id}">${escapeText(post.title)}</option>`).join('');
     renderPostTable();
@@ -770,7 +865,9 @@
       const post = allPosts.find(item => item.id === id);
       // 공개 글을 편집 초안으로 저장한 뒤 목록에서 다시 공개하는 경우에도
       // 이전 공개본이 아니라 최신 working_content를 정식 공개 열에 반영합니다.
-      changes = { ...workingFromPost(post), status: 'published', published_at: post?.working_content?.published_at || post?.published_at || today() };
+      const working = workingFromPost(post);
+      changes = buildCanonicalPayload(working, 'published', post.ref_no, post.created_by || currentUser.id);
+      changes.published_at = working.published_at || post.published_at || today();
     }
     if (action === 'toggle-home') changes = { home_featured: !allPosts.find(post => post.id === id)?.home_featured };
     if (!changes) return;
