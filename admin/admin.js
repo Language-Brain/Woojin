@@ -27,6 +27,7 @@
   let videos = [];
   let currentPost = null;
   let featuredFile = null;
+  let featuredFile2 = null;
   let quill = null;
   let dirty = false;
   let saving = false;
@@ -305,7 +306,7 @@
   }
 
   $('#post-form').addEventListener('input', event => {
-    if (event.target.id !== 'post-image') markDirty();
+    if (!['post-image', 'post-image-2'].includes(event.target.id)) markDirty();
   });
   window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 
@@ -347,28 +348,49 @@
     event.target.value = '';
   });
 
-  $('#post-image').addEventListener('change', event => {
-    const file = event.target.files[0];
-    if (!file) return;
-    try {
-      validateImage(file);
-      featuredFile = file;
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
-      img.alt = '선택한 대표 이미지 미리보기';
-      $('#featured-preview').replaceChildren(img);
-      markDirty();
-    } catch (error) { event.target.value = ''; showToast(error.message, true); }
-  });
-
-  function setFeaturedPreview(url, alt = '') {
-    const box = $('#featured-preview');
-    if (!url) { box.innerHTML = '<span>등록된 이미지가 없습니다.</span>'; return; }
+  function setFeaturedPreview(slot, url, alt = '', fileName = '') {
+    const suffix = slot === 2 ? '-2' : '';
+    const box = $(`#featured-preview${suffix}`);
+    const name = $(`#post-image-name${suffix}`);
+    if (!url) {
+      box.innerHTML = '<span>등록된 이미지가 없습니다.</span>';
+      name.textContent = fileName || '선택된 파일 없음';
+      return;
+    }
     const img = document.createElement('img');
     img.src = url;
-    img.alt = alt || '대표 이미지';
+    img.alt = alt || `이미지 ${slot}`;
     box.replaceChildren(img);
+    name.textContent = fileName || '등록된 이미지';
   }
+
+  function bindFeaturedImage(slot) {
+    const suffix = slot === 2 ? '-2' : '';
+    const input = $(`#post-image${suffix}`);
+    input.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        validateImage(file);
+        if (slot === 2) featuredFile2 = file;
+        else featuredFile = file;
+        setFeaturedPreview(slot, URL.createObjectURL(file), `선택한 이미지 ${slot} 미리보기`, file.name);
+        markDirty();
+      } catch (error) { event.target.value = ''; showToast(error.message, true); }
+    });
+    $(`#clear-post-image${suffix}`).addEventListener('click', () => {
+      if (slot === 2) featuredFile2 = null;
+      else featuredFile = null;
+      input.value = '';
+      $(`#post-image-url${suffix}`).value = '';
+      $(`#post-image-alt${suffix}`).value = '';
+      setFeaturedPreview(slot, '');
+      markDirty();
+    });
+  }
+
+  bindFeaturedImage(1);
+  bindFeaturedImage(2);
 
   function cleanExternalUrl(value, label = '주소') {
     const raw = String(value || '').trim();
@@ -419,6 +441,8 @@
       link_url: $('#post-link').value.trim(),
       image_url: $('#post-image-url').value,
       image_alt: $('#post-image-alt').value.trim(),
+      image_url_2: $('#post-image-url-2').value,
+      image_alt_2: $('#post-image-alt-2').value.trim(),
       tags: $('#post-tags').value.split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 20),
       published_at: $('#post-date').value || today(),
       home_featured: $('#post-home-featured').checked,
@@ -441,8 +465,27 @@
     };
   }
 
+  const secondImagePattern = /<!--languagebrain-image-2:([^>]*)-->/;
+
+  function secondImageFromContent(content) {
+    const match = String(content || '').match(secondImagePattern);
+    if (!match) return { url: '', alt: '' };
+    try {
+      const image = JSON.parse(decodeURIComponent(match[1]));
+      return { url: String(image.url || ''), alt: String(image.alt || '') };
+    } catch { return { url: '', alt: '' }; }
+  }
+
+  function contentWithSecondImage(content, url, alt) {
+    const clean = String(content || '').replace(secondImagePattern, '');
+    if (!url) return clean;
+    const encoded = encodeURIComponent(JSON.stringify({ url, alt: alt || '' }));
+    return `<!--languagebrain-image-2:${encoded}-->${clean}`;
+  }
   function canonicalPayload(working, status) {
-    return { ...working, status, ref_no: $('#post-ref').value.trim(), working_content: working, created_by: currentUser.id };
+    const { image_url_2, image_alt_2, ...canonical } = working;
+    canonical.content_html = contentWithSecondImage(canonical.content_html, image_url_2, image_alt_2);
+    return { ...canonical, status, ref_no: $('#post-ref').value.trim(), working_content: working, created_by: currentUser.id };
   }
 
   async function savePost(mode = 'draft') {
@@ -458,12 +501,24 @@
     ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = true; });
     setSaveState(mode === 'autosave' ? '자동 저장 중…' : '저장 중…', 'saving');
     try {
-      if (featuredFile) {
-        const uploaded = await uploadImage(featuredFile, working.image_alt);
-        working.image_url = uploaded.publicUrl;
-        $('#post-image-url').value = uploaded.publicUrl;
-        featuredFile = null;
-        $('#post-image').value = '';
+      const pendingImages = [
+        { slot: 1, file: featuredFile, alt: working.image_alt },
+        { slot: 2, file: featuredFile2, alt: working.image_alt_2 }
+      ];
+      const uploadedByFingerprint = new Map();
+      for (const pending of pendingImages) {
+        if (!pending.file) continue;
+        const fingerprint = [pending.file.name, pending.file.size, pending.file.type, pending.file.lastModified].join(':');
+        const uploaded = uploadedByFingerprint.get(fingerprint) || await uploadImage(pending.file, pending.alt);
+        uploadedByFingerprint.set(fingerprint, uploaded);
+        const key = pending.slot === 2 ? 'image_url_2' : 'image_url';
+        const suffix = pending.slot === 2 ? '-2' : '';
+        working[key] = uploaded.publicUrl;
+        $(`#post-image-url${suffix}`).value = uploaded.publicUrl;
+        if (pending.slot === 2) featuredFile2 = null;
+        else featuredFile = null;
+        $(`#post-image${suffix}`).value = '';
+        setFeaturedPreview(pending.slot, uploaded.publicUrl, pending.alt);
       }
       let id = $('#post-id').value;
       let result;
@@ -514,6 +569,7 @@
   function resetEditor() {
     currentPost = null;
     featuredFile = null;
+    featuredFile2 = null;
     $('#post-form').reset();
     $('#post-id').value = '';
     $('#post-image-url').value = '';
@@ -523,7 +579,8 @@
     $('#post-home-featured').checked = true;
     $('#post-home-order').value = '0';
     quill?.setContents([]);
-    setFeaturedPreview('');
+    setFeaturedPreview(1, '');
+    setFeaturedPreview(2, '');
     $('#editor-mode').textContent = '새 글';
     $('#current-status').textContent = '새 글';
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
@@ -535,6 +592,7 @@
 
   function workingFromPost(post) {
     const draft = post.working_content && Object.keys(post.working_content).length ? post.working_content : {};
+    const publishedSecondImage = secondImageFromContent(post.content_html);
     return {
       type: draft.type ?? post.type,
       category: draft.category ?? post.category,
@@ -547,6 +605,8 @@
       link_url: draft.link_url ?? post.link_url,
       image_url: draft.image_url ?? post.image_url,
       image_alt: draft.image_alt ?? post.image_alt ?? '',
+      image_url_2: draft.image_url_2 ?? publishedSecondImage.url,
+      image_alt_2: draft.image_alt_2 ?? publishedSecondImage.alt,
       tags: draft.tags ?? post.tags ?? [],
       published_at: draft.published_at ?? post.published_at,
       home_featured: draft.home_featured ?? post.home_featured ?? true,
@@ -574,6 +634,7 @@
     if (!post) return;
     currentPost = post;
     featuredFile = null;
+    featuredFile2 = null;
     const working = workingFromPost(post);
     $('#post-id').value = post.id;
     $('#post-type').value = working.type;
@@ -586,6 +647,8 @@
     $('#post-link').value = working.link_url;
     $('#post-image-url').value = working.image_url;
     $('#post-image-alt').value = working.image_alt;
+    $('#post-image-url-2').value = working.image_url_2;
+    $('#post-image-alt-2').value = working.image_alt_2;
     $('#post-tags').value = (working.tags || []).join(', ');
     $('#post-date').value = working.published_at || today();
     $('#post-home-featured').checked = working.home_featured;
@@ -607,7 +670,8 @@
     $('#post-full-text-url').value = working.full_text_url;
     $('#post-ref').value = post.ref_no;
     quill.clipboard.dangerouslyPasteHTML(DOMPurify.sanitize(working.content_html || ''));
-    setFeaturedPreview(working.image_url, working.image_alt);
+    setFeaturedPreview(1, working.image_url, working.image_alt);
+    setFeaturedPreview(2, working.image_url_2, working.image_alt_2);
     $('#editor-mode').textContent = '글 수정';
     dirty = false;
     setSaveState('저장됨', 'saved');
@@ -632,7 +696,9 @@
     let working;
     try { working = collectWorking(); } catch (error) { showToast(error.message, true); return; }
     const citationPreview = working.type === 'paper' && (working.citation || working.doi_url || working.full_text_url) ? `<section class="source-box"><h2>[논문 정보]</h2>${working.citation ? `<p>${escapeText(working.citation)}</p>` : ''}<p>${working.doi_url ? `<a href="${escapeText(working.doi_url)}" target="_blank" rel="noopener noreferrer">DOI</a>` : ''}${working.doi_url && working.full_text_url ? ' · ' : ''}${working.full_text_url ? `<a href="${escapeText(working.full_text_url)}" target="_blank" rel="noopener noreferrer">논문 전문</a>` : ''}</p></section>` : '';
-    $('#preview-content').innerHTML = `${working.image_url ? `<img class="preview-hero" src="${escapeText(working.image_url)}" alt="${escapeText(working.image_alt)}">` : ''}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>`;
+    const previewImages = [[working.image_url, working.image_alt], [working.image_url_2, working.image_alt_2]].filter(([url]) => url);
+    const previewGallery = previewImages.length ? `<div class="preview-image-gallery ${previewImages.length === 2 ? 'double' : 'single'}">${previewImages.map(([url, alt]) => `<img src="${escapeText(url)}" alt="${escapeText(alt)}">`).join('')}</div>` : '';
+    $('#preview-content').innerHTML = `${previewGallery}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>`;
     $('#preview-content').insertAdjacentHTML('beforeend', citationPreview);
     $('#preview-dialog').showModal();
   }

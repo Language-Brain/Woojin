@@ -16,11 +16,29 @@ function shareMarkup() {
   return '<div class="share-area"><button class="share-button" type="button" aria-label="공유하기"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"></path></svg><span>공유하기</span></button><p class="share-status" role="status" aria-live="polite"></p><a class="share-fallback" hidden>주소 직접 열기</a></div>';
 }
 
+function secondImageFromContent(content) {
+  const match = String(content || '').match(/<!--languagebrain-image-2:([^>]*)-->/);
+  if (!match) return { url: '', alt: '' };
+  try {
+    const image = JSON.parse(decodeURIComponent(match[1]));
+    return { url: String(image.url || ''), alt: String(image.alt || '') };
+  } catch { return { url: '', alt: '' }; }
+}
+
+function articleImages(post) {
+  const second = secondImageFromContent(post.content_html);
+  return [
+    { url: post.image_url, alt: post.image_alt || post.title },
+    { url: second.url, alt: second.alt || post.title }
+  ].filter(image => image.url);
+}
 function renderArticle(post) {
   const type = TYPE_LABELS[post.type] || '연구 글';
   const body = post.content_html ? safeContent(post.content_html) : `<p>${escapeHtml(post.excerpt || '본문을 준비하고 있습니다.')}</p>`;
   const tags = post.tags?.length ? `<div class="tags">${post.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>` : '';
-  return `<header class="article-head"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div>${post.image_url ? `<img class="hero" src="${escapeHtml(post.image_url)}" alt="${escapeHtml(post.image_alt || post.title)}">` : ''}</div></header><article class="wrap article-body">${body}${tags}${shareMarkup()}</article>`;
+  const images = articleImages(post);
+  const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}">`).join('')}</div>` : '';
+  return `<header class="article-head"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div>${gallery}</div></header><article class="wrap article-body">${body}${tags}${shareMarkup()}</article>`;
 }
 
 export default async function handler(request, response) {
