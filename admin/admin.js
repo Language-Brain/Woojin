@@ -301,8 +301,7 @@
         history: { delay: 900, maxStack: 200, userOnly: true }
       }
     });
-    function updateColorIndicators() {
-      const format = quill.getFormat();
+    function updateColorIndicators(format = {}) {
       const color = format.color || '#172033';
       const background = format.background || '#ffffff';
       const colorLabel = document.querySelector('.ql-color .ql-picker-label');
@@ -310,9 +309,14 @@
       if (colorLabel) { colorLabel.style.backgroundColor = color; colorLabel.style.borderColor = '#8f98a4'; colorLabel.title = `글자색: ${color}`; }
       if (backgroundLabel) { backgroundLabel.style.background = `linear-gradient(135deg, ${background} 0 70%, #fff 70%)`; backgroundLabel.style.borderColor = '#8f98a4'; backgroundLabel.title = `강조색: ${background}`; }
     }
-    quill.on('text-change', (_delta, _old, source) => { if (source === 'user') markDirty(); updateColorIndicators(); });
-    quill.on('selection-change', updateColorIndicators);
-    updateColorIndicators();
+    quill.on('text-change', (_delta, _old, source) => {
+      if (source === 'user') markDirty();
+      if (quill.hasFocus()) updateColorIndicators(quill.getFormat());
+    });
+    quill.on('selection-change', range => {
+      if (range) updateColorIndicators(quill.getFormat(range));
+    });
+    updateColorIndicators({});
   }
 
   function markDirty() {
