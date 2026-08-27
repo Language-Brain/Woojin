@@ -115,9 +115,7 @@ export default async function handler(request, response) {
     }
     return json(response, 201, { ok: true });
   } catch (error) {
-    const cause = safeHeader(error.message);
-    console.error('inquiry_submit_failed', cause);
-    response.setHeader('X-Inquiry-Diagnostic', cause === 'server_not_configured' ? 'configuration' : cause.replace(/[^a-z0-9_]/gi, '').slice(0, 32) || 'server_error');
+    console.error('inquiry_submit_failed', safeHeader(error.message));
     return json(response, 503, { ok: false, message: '지금은 문의를 접수할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
   }
 }
