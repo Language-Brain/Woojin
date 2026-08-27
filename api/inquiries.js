@@ -1,7 +1,7 @@
 import { dedupeKey, escapeHtml, hash, requestIp, safeHeader, validateAndClassify } from './inquiry-validation.js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhaosgzyvoijgwryybry.supabase.co';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 const RESEND_KEY = process.env.RESEND_API_KEY || '';
 const TO_EMAIL = process.env.INQUIRY_TO_EMAIL || '';
 const FROM_EMAIL = process.env.INQUIRY_FROM_EMAIL || '언어와 뇌 홈페이지 <onboarding@resend.dev>';
@@ -16,9 +16,11 @@ function json(response, status, body) {
 
 async function supabase(path, options = {}) {
   if (!SERVICE_KEY) throw new Error('server_not_configured');
+  const serviceHeaders = { apikey: SERVICE_KEY };
+  if (!SERVICE_KEY.startsWith('sb_secret_')) serviceHeaders.Authorization = `Bearer ${SERVICE_KEY}`;
   const result = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
-    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(options.headers || {}) }
+    headers: { ...serviceHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(options.headers || {}) }
   });
   const text = await result.text();
   if (!result.ok) {
