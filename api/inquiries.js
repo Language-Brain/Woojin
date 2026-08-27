@@ -24,7 +24,9 @@ async function supabase(path, options = {}) {
   });
   const text = await result.text();
   if (!result.ok) {
-    const error = new Error(`database_${result.status}`);
+    const detail = text.toLowerCase();
+    const category = /invalid (?:api )?key|no api key/.test(detail) ? 'invalid_key' : /permission denied|insufficient_privilege/.test(detail) ? 'permission' : /row.level|rls/.test(detail) ? 'rls' : /jwt/.test(detail) ? 'jwt' : /column|schema cache/.test(detail) ? 'schema' : 'request';
+    const error = new Error(`database_${result.status}_${category}`);
     error.detail = text;
     throw error;
   }
