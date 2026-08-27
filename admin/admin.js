@@ -25,6 +25,7 @@
   let mediaAssets = [];
   let viewRows = [];
   let videos = [];
+  let books = [];
   let currentPost = null;
   let featuredFile = null;
   let featuredFile2 = null;
@@ -115,7 +116,7 @@
     $('#login-view').classList.add('hidden');
     $('#admin-app').classList.remove('hidden');
     $('#account-email').textContent = currentUser.email;
-    await Promise.all([loadCategories(), loadPosts(), loadMedia(), loadViews(), loadInquiries(), loadVideos()]);
+    await Promise.all([loadCategories(), loadPosts(), loadMedia(), loadViews(), loadInquiries(), loadVideos(), loadBooks()]);
     renderDashboard();
     navigate('dashboard');
   }
@@ -254,6 +255,7 @@
     if (view === 'media') renderMedia();
     if (view === 'stats') renderStats();
     if (view === 'videos') renderVideos();
+    if (view === 'books') renderBookTable();
     if (view === 'posts') $('#post-management-title').textContent = ({ paper: '논문 관리', news: '뉴스 관리', works: '연구 원고 관리' })[$('#filter-type').value] || '글 관리';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -1273,6 +1275,137 @@
     }
     const { error } = await db.from('videos').update(changes).eq('id', id);
     if (error) showToast(error.message, true); else { await loadVideos(); showToast('동영상 상태를 변경했습니다.'); }
+  });
+
+
+  function cleanBookUrl(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      if (!/^https?:$/.test(url.protocol)) return '';
+      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','fbclid','gclid','mc_cid','mc_eid'].forEach(key => url.searchParams.delete(key));
+      return url.href;
+    } catch { return ''; }
+  }
+
+  function normalizedBookTitle(value) { return String(value || '').toLocaleLowerCase('ko-KR').replace(/[\\s·:：,.'\"“”‘’()\\[\\]{}_-]+/g, ''); }
+  function similarBookTitles(value, ignoredId = '') {
+    const target = normalizedBookTitle(value);
+    if (target.length < 2) return [];
+    return books.filter(book => book.id !== ignoredId && book.status !== 'trashed').filter(book => {
+      const candidate = normalizedBookTitle(book.title);
+      return candidate === target || (Math.min(candidate.length, target.length) >= 5 && (candidate.includes(target) || target.includes(candidate)));
+    });
+  }
+
+  function setBookCoverPreview(url, label = '') {
+    const preview = $('#book-cover-preview');
+    preview.replaceChildren();
+    if (url) { const image = document.createElement('img'); image.src = url; image.alt = '선택한 책 표지 미리보기'; preview.append(image); }
+    else preview.innerHTML = '<span>표지 없음</span>';
+    $('#book-cover-name').textContent = label || (url ? '등록된 표지' : '선택된 파일 없음');
+  }
+
+  function addBookLinkRow(link = {}) {
+    const row = document.createElement('div'); row.className = 'book-link-row';
+    row.innerHTML = '<input data-book-link-label maxlength="80" placeholder="연결처 이름 (예: 교보문고에서 보기)"><input data-book-link-url type="url" maxlength="1000" placeholder="https://..."><button class="button ghost small" data-remove-book-link type="button">삭제</button>';
+    row.querySelector('[data-book-link-label]').value = link.label || '';
+    row.querySelector('[data-book-link-url]').value = link.url || '';
+    $('#book-links-editor').append(row);
+  }
+
+  function resetBookForm() {
+    $('#book-form').reset(); $('#book-id').value = ''; $('#book-cover-url').value = ''; $('#book-order').value = '0';
+    $('#book-form-title').textContent = '새 책'; $('#book-links-editor').replaceChildren(); addBookLinkRow(); setBookCoverPreview('');
+    $('#book-duplicate-warning').hidden = true; $('#book-message').textContent = '';
+  }
+
+  function openBookForm(book = null) {
+    resetBookForm();
+    if (book) {
+      $('#book-id').value = book.id; $('#book-title').value = book.title || ''; $('#book-author').value = book.author || '';
+      $('#book-description').value = book.description || ''; $('#book-cover-url').value = book.cover_url || ''; $('#book-status').value = book.status === 'published' ? 'published' : 'draft';
+      $('#book-order').value = book.display_order ?? 0; $('#book-pinned').checked = !!book.is_pinned; $('#book-publisher').value = book.publisher || '';
+      $('#book-year').value = book.publication_year || ''; $('#book-isbn').value = book.isbn || ''; $('#book-note').value = book.admin_note || '';
+      $('#book-links-editor').replaceChildren(); (Array.isArray(book.links) && book.links.length ? book.links : [{}]).forEach(addBookLinkRow);
+      setBookCoverPreview(book.cover_url, '등록된 표지'); $('#book-form-title').textContent = '책 수정';
+    }
+    $('#book-form').classList.remove('hidden'); $('#book-title').focus(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function collectBookLinks() {
+    const links = $('.book-link-row').map(row => ({ label: row.querySelector('[data-book-link-label]').value.trim(), url: cleanBookUrl(row.querySelector('[data-book-link-url]').value) })).filter(link => link.label || link.url);
+    if (links.some(link => !link.label || !link.url)) throw new Error('각 외부 링크의 연결처 이름과 올바른 http 또는 https 주소를 모두 입력해 주세요.');
+    return links;
+  }
+
+  function renderBookPreview(book) {
+    const content = $('#book-preview-content'); content.replaceChildren();
+    const image = document.createElement('img'); image.src = book.cover_url || ($('#book-cover-preview img')?.src || ''); image.alt = `${book.title} 책 표지`;
+    const copy = document.createElement('div'), title = document.createElement('h2'), author = document.createElement('p'), description = document.createElement('p');
+    title.textContent = book.title || '제목 없음'; author.textContent = book.author || '저자 없음'; description.textContent = book.description || '';
+    copy.append(title, author, description); const safeLinks = (book.links || []).map(link => ({ label: link.label, url: cleanBookUrl(link.url) })).filter(link => link.url);
+    if (safeLinks.length) { const nav = document.createElement('nav'); safeLinks.forEach(link => { const a = document.createElement('a'); a.href = link.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = link.label; nav.append(a); }); copy.append(nav); }
+    content.append(image, copy); $('#book-preview-dialog').showModal();
+  }
+
+  function renderBookTable() {
+    const search = $('#book-search').value.trim().toLocaleLowerCase('ko-KR'), status = $('#book-filter-status').value;
+    const rows = books.filter(book => (!search || book.title.toLocaleLowerCase('ko-KR').includes(search)) && (status === 'all' || status === 'active' ? status !== 'active' || book.status !== 'trashed' : book.status === status));
+    $('#book-empty').classList.toggle('hidden', rows.length > 0);
+    $('#book-table-body').innerHTML = rows.map(book => `<tr data-book-id="${book.id}"><td><img class="book-list-cover" src="${escapeText(book.cover_url || '')}" alt=""></td><td><strong class="book-list-title">${escapeText(book.title)}<small>${escapeText(book.author)}</small></strong>${book.is_pinned ? '<span class="badge published">전면 고정</span>' : ''}</td><td>${formatDate(book.created_at)}</td><td><span class="badge ${book.status}">${statusLabels[book.status]}</span></td><td><div class="book-order-controls"><button class="button ghost small" data-book-action="up" title="앞으로">↑</button><b>${book.display_order ?? 0}</b><button class="button ghost small" data-book-action="down" title="뒤로">↓</button></div></td><td><div class="book-actions"><button class="button ghost small" data-book-action="preview">미리보기</button><button class="button secondary small" data-book-action="edit">수정</button>${book.status === 'trashed' ? '<button class="button secondary small" data-book-action="restore">복구</button>' : '<button class="button ghost small" data-book-action="toggle">'+(book.status === 'published' ? '비공개' : '공개')+'</button><button class="button danger small" data-book-action="trash">휴지통</button>'}</div></td></tr>`).join('');
+  }
+
+  async function loadBooks() {
+    const { data, error } = await db.from('books').select('*').order('is_pinned', { ascending: false }).order('display_order').order('created_at', { ascending: false });
+    if (error) { console.error('책 목록 조회 실패', error.message); books = []; } else books = data || [];
+    renderBookTable();
+  }
+
+
+  $('#new-book').addEventListener('click', () => openBookForm());
+  $('#book-cancel').addEventListener('click', () => $('#book-form').classList.add('hidden'));
+  $('#add-book-link').addEventListener('click', () => addBookLinkRow());
+  $('#book-links-editor').addEventListener('click', event => { if (event.target.matches('[data-remove-book-link]')) event.target.closest('.book-link-row').remove(); });
+  $('#book-title').addEventListener('input', () => { $('#book-duplicate-warning').hidden = similarBookTitles($('#book-title').value, $('#book-id').value).length === 0; });
+  $('#book-cover').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; try { validateImage(file); setBookCoverPreview(URL.createObjectURL(file), file.name); } catch (error) { event.target.value = ''; showToast(error.message, true); } });
+  $('#book-search').addEventListener('input', renderBookTable); $('#book-filter-status').addEventListener('change', renderBookTable);
+  $('#close-book-preview').addEventListener('click', () => $('#book-preview-dialog').close());
+  $('#book-preview-dialog').addEventListener('click', event => { if (event.target === $('#book-preview-dialog')) $('#book-preview-dialog').close(); });
+  $('#book-form-preview').addEventListener('click', () => { try { renderBookPreview({ title: $('#book-title').value.trim(), author: $('#book-author').value.trim(), description: $('#book-description').value.trim(), cover_url: $('#book-cover-url').value, links: collectBookLinks() }); } catch (error) { showToast(error.message, true); } });
+
+  $('#book-form').addEventListener('submit', async event => {
+    event.preventDefault(); const message = $('#book-message'), button = event.submitter; message.textContent = '';
+    const id = $('#book-id').value, title = $('#book-title').value.trim(), author = $('#book-author').value.trim(), file = $('#book-cover').files[0];
+    if (!title || !author) return message.textContent = '책 제목과 저자를 입력해 주세요.';
+    if (!file && !$('#book-cover-url').value) return message.textContent = '직접 업로드할 책 표지를 선택해 주세요.';
+    const duplicates = similarBookTitles(title, id); if (duplicates.length && !confirm(`“${duplicates[0].title}”과 같거나 매우 비슷한 책이 있습니다. 그래도 저장할까요?`)) return;
+    let links; try { links = collectBookLinks(); } catch (error) { return message.textContent = error.message; }
+    button.disabled = true; message.textContent = '책 정보를 저장하고 있습니다.';
+    try {
+      let coverUrl = $('#book-cover-url').value;
+      if (file) { const uploaded = await uploadImage(file, `${title} 책 표지`); coverUrl = uploaded.publicUrl; }
+      const payload = { title, author, description: $('#book-description').value.trim(), cover_url: coverUrl, links, status: $('#book-status').value, is_pinned: $('#book-pinned').checked, display_order: Number($('#book-order').value) || 0, publisher: $('#book-publisher').value.trim() || null, publication_year: Number($('#book-year').value) || null, isbn: $('#book-isbn').value.trim() || null, admin_note: $('#book-note').value.trim() || null, deleted_at: null };
+      const result = id ? await db.from('books').update(payload).eq('id', id) : await db.from('books').insert({ ...payload, created_by: currentUser.id });
+      if (result.error) throw result.error;
+      $('#book-form').classList.add('hidden'); await Promise.all([loadBooks(), loadMedia()]); showToast('책 정보를 저장했습니다.');
+    } catch (error) { message.textContent = `저장하지 못했습니다: ${error.message}`; } finally { button.disabled = false; }
+  });
+
+  $('#book-table-body').addEventListener('click', async event => {
+    const action = event.target.dataset.bookAction; if (!action) return; const id = event.target.closest('[data-book-id]').dataset.bookId, book = books.find(item => item.id === id); if (!book) return;
+    if (action === 'edit') return openBookForm(book); if (action === 'preview') return renderBookPreview(book);
+    if (action === 'trash' && !confirm(`“${book.title}”을 책 휴지통으로 옮길까요? 나중에 복구할 수 있습니다.`)) return;
+    let changes;
+    if (action === 'trash') changes = { status: 'trashed', deleted_at: new Date().toISOString(), is_pinned: false };
+    if (action === 'restore') changes = { status: 'draft', deleted_at: null };
+    if (action === 'toggle') changes = { status: book.status === 'published' ? 'draft' : 'published', deleted_at: null };
+    if (action === 'up' || action === 'down') {
+      const active = books.filter(item => item.status !== 'trashed'); const index = active.findIndex(item => item.id === id), neighbor = active[index + (action === 'up' ? -1 : 1)]; if (!neighbor) return;
+      const firstOrder = Number(book.display_order) || 0, secondOrder = Number(neighbor.display_order) || 0;
+      const [{ error: firstError }, { error: secondError }] = await Promise.all([db.from('books').update({ display_order: secondOrder }).eq('id', book.id), db.from('books').update({ display_order: firstOrder }).eq('id', neighbor.id)]);
+      if (firstError || secondError) return showToast((firstError || secondError).message, true); await loadBooks(); return showToast('진열 순서를 바꿨습니다.');
+    }
+    if (!changes) return; const { error } = await db.from('books').update(changes).eq('id', id); if (error) showToast(error.message, true); else { await loadBooks(); showToast('책 상태를 변경했습니다.'); }
   });
 
   resetCategory();

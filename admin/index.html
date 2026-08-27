@@ -50,6 +50,7 @@
         <button class="nav-item" data-view="posts" data-post-type="news" type="button"><span>◫</span>뉴스 관리</button>
         <button class="nav-item" data-view="posts" data-post-type="works" type="button"><span>▥</span>연구 원고 관리</button>
         <button class="nav-item" data-view="videos" type="button"><span>▶</span>동영상 관리</button>
+        <button class="nav-item" data-view="books" type="button"><span>▦</span>책 관리</button>
         <button class="nav-item" data-view="categories" type="button"><span>⌗</span>카테고리 관리</button>
         <button class="nav-item" data-view="media" type="button"><span>▧</span>이미지 관리</button>
         <button class="nav-item" data-view="stats" type="button"><span>▥</span>통계</button>
@@ -126,6 +127,12 @@
         </div>
       </section>
 
+      <section id="view-books" class="view" data-view-section="books">
+        <header class="page-head"><div><p class="eyebrow">작은 온라인 서가</p><h1>책 관리</h1><p>표지·제목·저자와 진열 순서를 간결하게 관리합니다.</p></div><button id="new-book" class="button primary" type="button">새 책 등록</button></header>
+        <form id="book-form" class="panel compact-book-form hidden"><input id="book-id" type="hidden"><input id="book-cover-url" type="hidden"><div class="panel-head"><h2 id="book-form-title">새 책</h2><button id="book-cancel" class="text-button" type="button">닫기</button></div><div class="book-form-grid"><div class="field"><label for="book-title">책 제목</label><input id="book-title" maxlength="240" required><small id="book-duplicate-warning" class="book-warning" hidden>같거나 매우 비슷한 제목의 책이 이미 등록되어 있습니다.</small></div><div class="field"><label for="book-author">저자</label><input id="book-author" maxlength="240" required></div><div class="field span-2"><label for="book-description">짧은 소개 또는 선정 이유</label><textarea id="book-description" rows="3" maxlength="1200"></textarea></div><div class="book-cover-field"><div id="book-cover-preview" class="book-cover-preview"><span>표지 없음</span></div><div><label class="button secondary file-button" for="book-cover">표지 선택·교체</label><input id="book-cover" type="file" accept="image/jpeg,image/png,image/webp" hidden><small id="book-cover-name">선택된 파일 없음</small></div></div><div class="book-publish-fields"><div class="field"><label for="book-status">공개 여부</label><select id="book-status"><option value="draft">비공개</option><option value="published">공개</option></select></div><div class="field"><label for="book-order">진열 순서</label><input id="book-order" type="number" value="0"></div><label class="check-row"><input id="book-pinned" type="checkbox"> 전면 고정</label></div><div class="span-2"><div class="panel-head compact"><strong>외부 링크</strong><button id="add-book-link" class="button ghost small" type="button">링크 추가</button></div><div id="book-links-editor" class="book-links-editor"></div></div><details class="span-2 book-extra"><summary>추가 정보</summary><div class="book-form-grid"><div class="field"><label for="book-publisher">출판사</label><input id="book-publisher" maxlength="240"></div><div class="field"><label for="book-year">발행 연도</label><input id="book-year" type="number" min="1000" max="2200"></div><div class="field"><label for="book-isbn">ISBN</label><input id="book-isbn" maxlength="40"></div><div class="field"><label for="book-note">관리자 메모</label><input id="book-note" maxlength="500"></div></div></details></div><div class="button-row"><button class="button primary" type="submit">책 저장</button><button id="book-form-preview" class="button ghost" type="button">미리보기</button></div><p id="book-message" class="form-status" role="status"></p></form>
+        <div class="filter-bar"><label class="search-field"><span>⌕</span><input id="book-search" type="search" placeholder="책 제목 검색"></label><select id="book-filter-status"><option value="active">휴지통 제외</option><option value="published">공개</option><option value="draft">비공개</option><option value="trashed">휴지통</option><option value="all">전체</option></select></div><div class="table-wrap"><table class="post-table book-table"><thead><tr><th>표지</th><th>제목·저자</th><th>등록일</th><th>공개</th><th>순서</th><th>관리</th></tr></thead><tbody id="book-table-body"></tbody></table><div id="book-empty" class="empty-state hidden">등록된 책이 없습니다.</div></div>
+      </section>
+
       <section id="view-posts" class="view" data-view-section="posts">
         <header class="page-head"><div><p class="eyebrow">콘텐츠</p><h1><span id="post-management-title" style="font:inherit;color:inherit">글 관리</span> <span id="post-count"></span></h1><p>제목을 눌러 원고를 이어 쓰거나 공개 상태를 변경할 수 있습니다.</p></div><button class="button primary" data-open-editor type="button">새 자료 등록</button></header>
         <div class="filter-bar"><label class="search-field"><span>⌕</span><input id="post-search" type="search" placeholder="제목 검색"></label><select id="filter-type" aria-label="글 종류"><option value="all">모든 종류</option><option value="paper">해외 연구 소개</option><option value="works">글과 해설</option><option value="news">언어와 뇌 뉴스</option><option value="notice">공지</option><option value="other">기타</option></select><select id="filter-category" aria-label="카테고리"><option value="all">모든 카테고리</option></select><select id="filter-status" aria-label="공개 상태"><option value="active">휴지통 제외</option><option value="published">공개</option><option value="draft">비공개·임시</option><option value="trashed">휴지통</option><option value="all">전체</option></select><select id="post-sort" aria-label="정렬"><option value="updated-desc">최근 수정순</option><option value="published-desc">최근 공개순</option><option value="created-asc">오래된순</option></select></div>
@@ -154,6 +161,7 @@
     </main>
   </div>
 
+  <dialog id="book-preview-dialog" class="preview-dialog book-preview-dialog"><div class="preview-toolbar"><strong>책 공개 화면 미리보기</strong><button id="close-book-preview" class="icon-button" type="button" aria-label="책 미리보기 닫기">×</button></div><article id="book-preview-content" class="admin-book-preview"></article></dialog>
   <dialog id="preview-dialog" class="preview-dialog"><div class="preview-toolbar"><strong>공개 화면 미리보기</strong><button id="close-preview" class="icon-button" type="button" aria-label="미리보기 닫기">×</button></div><article id="preview-content" class="article-preview"></article></dialog>
   <dialog id="password-change-dialog" class="account-dialog">
     <form id="password-change-form" method="dialog">
@@ -173,6 +181,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-  <script src="/admin/admin.js?v=post-type-ref-20260827"></script>
+  <script src="/admin/admin.js?v=recent-books-20260828"></script>
 </body>
 </html>
