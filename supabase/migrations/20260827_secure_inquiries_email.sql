@@ -38,6 +38,14 @@ drop policy if exists "inquiries_admin_select" on public.inquiries;
 create policy "inquiries_admin_select" on public.inquiries
 for select to authenticated using (public.is_admin());
 
+drop policy if exists "inquiries_admin_update" on public.inquiries;
+create policy "inquiries_admin_update" on public.inquiries
+for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "inquiries_admin_delete" on public.inquiries;
+create policy "inquiries_admin_delete" on public.inquiries
+for delete to authenticated using (public.is_admin());
+
 -- 홈페이지에 공개하기로 선택한 답변만 익명 조회를 허용합니다.
 drop policy if exists "inquiries_public_read_answers" on public.inquiries;
 create policy "inquiries_public_read_answers" on public.inquiries
