@@ -33,10 +33,21 @@ create table if not exists public.posts (
 
 create table if not exists public.inquiries (
   id uuid primary key default gen_random_uuid(),
-  name text not null default '익명',
-  email text not null default '',
+  kind text not null default 'question' check (kind in ('lecture', 'question')),
+  name text not null default '익명' check (char_length(name) <= 80),
+  email text not null default '' check (char_length(email) <= 254),
+  phone text not null default '' check (char_length(phone) <= 40),
+  subject text not null default '' check (char_length(subject) <= 160),
   question text not null check (char_length(question) between 2 and 3000),
-  status text not null default 'new' check (status in ('new', 'reviewing', 'replied', 'archived')),
+  status text not null default 'new' check (status in ('new', 'reviewing', 'replied', 'archived', 'spam')),
+  spam_reason text not null default '',
+  email_status text not null default 'not_requested' check (email_status in ('not_requested', 'pending', 'sent', 'failed', 'suppressed')),
+  email_provider_id text not null default '',
+  email_error text not null default '',
+  email_sent_at timestamptz,
+  is_read boolean not null default false,
+  source_ip_hash text not null default '',
+  dedupe_key text unique,
   admin_reply text not null default '',
   is_public boolean not null default false,
   replied_at timestamptz,
@@ -101,12 +112,14 @@ create policy "posts_admin_delete" on public.posts
 for delete to authenticated using (public.is_admin());
 
 drop policy if exists "inquiries_public_insert" on public.inquiries;
-create policy "inquiries_public_insert" on public.inquiries
-for insert to anon, authenticated with check (status = 'new' and admin_reply = '' and is_public = false);
 
 drop policy if exists "inquiries_public_read_answers" on public.inquiries;
 create policy "inquiries_public_read_answers" on public.inquiries
-for select to anon, authenticated using ((status = 'replied' and is_public = true) or public.is_admin());
+for select to anon using (status = 'replied' and is_public = true);
+
+drop policy if exists "inquiries_admin_select" on public.inquiries;
+create policy "inquiries_admin_select" on public.inquiries
+for select to authenticated using (public.is_admin());
 
 drop policy if exists "inquiries_admin_update" on public.inquiries;
 create policy "inquiries_admin_update" on public.inquiries
@@ -121,7 +134,7 @@ grant select on public.posts to anon, authenticated;
 grant insert, update, delete on public.posts to authenticated;
 grant select on public.profiles to authenticated;
 grant select on public.inquiries to anon, authenticated;
-grant insert(name, email, question) on public.inquiries to anon, authenticated;
+revoke insert on public.inquiries from anon, authenticated;
 grant update, delete on public.inquiries to authenticated;
 
 insert into public.profiles (user_id, email, display_name, role)

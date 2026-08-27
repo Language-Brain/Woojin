@@ -1000,26 +1000,36 @@
     $$('#popular-posts [data-edit-post]').forEach(button => button.addEventListener('click', () => openEditor(button.dataset.editPost)));
   }
 
+  const inquiryKindLabels = { lecture: '강의 문의', question: '질문 제안' };
+  const inquiryEmailLabels = { sent: '발송 성공', failed: '발송 실패', pending: '발송 대기', suppressed: '스팸 발송 안 함', not_requested: '발송 대상 아님' };
+
   async function loadInquiries() {
     const { data, error } = await db.from('inquiries').select('*').order('created_at', { ascending: false });
-    if (error) { $('#inquiry-list').innerHTML = `<div class="empty-state">질문을 불러오지 못했습니다: ${escapeText(error.message)}</div>`; return; }
-    $('#inquiry-list').innerHTML = data?.length ? data.map(item => `<article class="inquiry" data-id="${item.id}"><div class="inquiry-top"><div><h3>${escapeText(item.question)}</h3><time>${escapeText(formatDate(item.created_at))}</time></div><span class="status-badge ${item.status === 'new' ? 'status-draft' : 'status-published'}">${escapeText(item.status)}</span></div><textarea aria-label="답변 내용" placeholder="답변을 작성해 주세요.">${escapeText(item.admin_reply)}</textarea><div class="inquiry-actions"><label><input type="checkbox" ${item.is_public ? 'checked' : ''}> 공개 홈페이지에 답변 표시</label><button class="button primary small" type="button" data-inquiry-save>답변 저장</button><button class="button secondary small" type="button" data-inquiry-archive>보관</button><span class="form-status"></span></div></article>`).join('') : '<div class="empty-state">아직 접수된 질문이 없습니다.</div>';
+    if (error) { $('#inquiry-list').innerHTML = `<div class="empty-state">문의를 불러오지 못했습니다: ${escapeText(error.message)}</div>`; return; }
+    $('#inquiry-list').innerHTML = data?.length ? data.map(item => {
+      const spam = item.status === 'spam';
+      const replyAllowed = item.kind !== 'lecture' && !spam;
+      return `<article class="inquiry ${spam ? 'inquiry-spam' : ''} ${item.is_read ? '' : 'inquiry-unread'}" data-id="${escapeText(item.id)}"><div class="inquiry-top"><div><p class="inquiry-flags"><span class="status-badge ${spam ? 'status-spam' : 'status-published'}">${spam ? '스팸 의심' : '정상'}</span><span class="status-badge status-kind">${escapeText(inquiryKindLabels[item.kind] || '질문 제안')}</span><span class="status-badge ${item.email_status === 'failed' ? 'status-spam' : 'status-draft'}">${escapeText(inquiryEmailLabels[item.email_status] || item.email_status || '기록 없음')}</span><span class="status-badge ${item.is_read ? 'status-published' : 'status-draft'}">${item.is_read ? '읽음' : '미확인'}</span></p><h3>${escapeText(item.subject || item.question.slice(0, 80))}</h3><time>${escapeText(formatDate(item.created_at))}</time></div></div><dl class="inquiry-details"><div><dt>작성자</dt><dd>${escapeText(item.name || '익명')}</dd></div><div><dt>이메일</dt><dd>${escapeText(item.email || '-')}</dd></div><div><dt>연락처</dt><dd>${escapeText(item.phone || '-')}</dd></div>${item.spam_reason ? `<div><dt>판정 사유</dt><dd>${escapeText(item.spam_reason)}</dd></div>` : ''}${item.email_error ? `<div><dt>발송 오류</dt><dd>${escapeText(item.email_error)}</dd></div>` : ''}</dl><pre class="inquiry-message">${escapeText(item.question)}</pre>${replyAllowed ? `<textarea aria-label="답변 내용" placeholder="답변을 작성해 주세요.">${escapeText(item.admin_reply)}</textarea>` : ''}<div class="inquiry-actions">${replyAllowed ? `<label><input type="checkbox" ${item.is_public ? 'checked' : ''}> 공개 홈페이지에 답변 표시</label><button class="button primary small" type="button" data-inquiry-save>답변 저장</button>` : ''}${item.is_read ? '' : '<button class="button secondary small" type="button" data-inquiry-read>읽음 표시</button>'}<button class="button secondary small" type="button" data-inquiry-archive>보관</button><span class="form-status"></span></div></article>`;
+    }).join('') : '<div class="empty-state">아직 접수된 문의가 없습니다.</div>';
   }
   $('#refresh-inquiries').addEventListener('click', loadInquiries);
   $('#inquiry-list').addEventListener('click', async event => {
     const card = event.target.closest('.inquiry');
     if (!card) return;
     const message = card.querySelector('.form-status');
+    if (event.target.hasAttribute('data-inquiry-read')) {
+      const { error } = await db.from('inquiries').update({ is_read: true }).eq('id', card.dataset.id);
+      if (error) message.textContent = '읽음 상태를 저장하지 못했습니다.'; else loadInquiries();
+    }
     if (event.target.hasAttribute('data-inquiry-save')) {
       const reply = card.querySelector('textarea').value.trim();
       const isPublic = card.querySelector('input[type="checkbox"]').checked;
-      const { error } = await db.from('inquiries').update({ admin_reply: reply, is_public: isPublic, status: reply ? 'replied' : 'reviewing', replied_at: reply ? new Date().toISOString() : null }).eq('id', card.dataset.id);
+      const { error } = await db.from('inquiries').update({ admin_reply: reply, is_public: isPublic, is_read: true, status: reply ? 'replied' : 'reviewing', replied_at: reply ? new Date().toISOString() : null }).eq('id', card.dataset.id);
       message.textContent = error ? '저장하지 못했습니다.' : '답변을 저장했습니다.';
       if (!error) loadInquiries();
     }
-    if (event.target.hasAttribute('data-inquiry-archive')) { await db.from('inquiries').update({ status: 'archived', is_public: false }).eq('id', card.dataset.id); loadInquiries(); }
+    if (event.target.hasAttribute('data-inquiry-archive')) { await db.from('inquiries').update({ status: 'archived', is_public: false, is_read: true }).eq('id', card.dataset.id); loadInquiries(); }
   });
-
   function extractYouTubeId(value) {
     try {
       const url = new URL(value.trim());
