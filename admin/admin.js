@@ -817,6 +817,69 @@
     navigate('posts');
   });
 
+  const safePreviewUrl = value => {
+    try {
+      const raw = String(value || '').trim();
+      if (!raw) return null;
+      const url = new URL(raw, location.origin);
+      return ['http:', 'https:'].includes(url.protocol) ? url : null;
+    } catch { return null; }
+  };
+
+  function normalizePreviewLinks(root) {
+    if (!root) return;
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.parentElement?.closest('a,script,style,code,pre,textarea') && /https?:\/\//i.test(node.nodeValue || '')) nodes.push(node);
+    }
+    nodes.forEach(node => {
+      const text = node.nodeValue || '';
+      const expression = /https?:\/\/[^\s<>"']+/gi;
+      let match; let last = 0; let changed = false;
+      const fragment = document.createDocumentFragment();
+      while ((match = expression.exec(text))) {
+        let hrefText = match[0]; let trailing = '';
+        while (hrefText && '.,!?;:)]}。、'.includes(hrefText.at(-1))) {
+          trailing = hrefText.at(-1) + trailing;
+          hrefText = hrefText.slice(0, -1);
+        }
+        const safe = safePreviewUrl(hrefText);
+        if (!safe) continue;
+        fragment.append(document.createTextNode(text.slice(last, match.index)));
+        const link = document.createElement('a');
+        link.href = safe.href;
+        link.textContent = hrefText;
+        fragment.append(link);
+        if (trailing) fragment.append(document.createTextNode(trailing));
+        last = match.index + match[0].length;
+        changed = true;
+      }
+      if (changed) {
+        fragment.append(document.createTextNode(text.slice(last)));
+        node.replaceWith(fragment);
+      }
+    });
+    root.querySelectorAll('a').forEach(link => {
+      const safe = safePreviewUrl(link.getAttribute('href'));
+      if (!safe) {
+        link.removeAttribute('href');
+        link.removeAttribute('target');
+        link.removeAttribute('rel');
+        return;
+      }
+      link.href = safe.origin === location.origin ? safe.pathname + safe.search + safe.hash : safe.href;
+      if (safe.origin !== location.origin) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      } else {
+        link.removeAttribute('target');
+        link.removeAttribute('rel');
+      }
+    });
+  }
+
   function renderPreview() {
     let working;
     try { working = collectWorking(); } catch (error) { showToast(error.message, true); return; }
@@ -827,6 +890,7 @@
     const recommendationPreview = recommendedPreviewRows.length ? `<section class="preview-recommendations"><h2>함께 읽으면 좋은 글</h2><ul>${recommendedPreviewRows.map(post => `<li>${escapeText(post.title)}</li>`).join('')}</ul></section>` : '';
     $('#preview-content').innerHTML = `${previewGallery}<p class="eyebrow">${escapeText(typeLabels[working.type])}${working.category ? ` · ${escapeText(working.category)}` : ''}</p><h1>${escapeText(working.title || '제목 없는 글')}</h1>${working.subtitle ? `<p class="preview-subtitle">${escapeText(working.subtitle)}</p>` : ''}${working.excerpt ? `<p class="preview-excerpt">${escapeText(working.excerpt)}</p>` : ''}<div class="preview-body">${DOMPurify.sanitize(working.content_html || '<p>본문이 아직 없습니다.</p>')}</div>${recommendationPreview}`;
     $('#preview-content').insertAdjacentHTML('beforeend', citationPreview);
+    normalizePreviewLinks($('#preview-content'));
     $('#preview-dialog').showModal();
   }
   $('#preview-post').addEventListener('click', renderPreview);
