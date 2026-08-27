@@ -14,7 +14,7 @@
   const today = () => new Date().toISOString().slice(0, 10);
   const formatDate = value => value ? new Date(value).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
   const escapeText = value => { const node = document.createElement('span'); node.textContent = value ?? ''; return node.innerHTML; };
-  const typeLabels = { paper: '해외 연구 소개', works: '글과 해설', news: '언어와 뇌 뉴스', notice: '공지', other: '기타' };
+  const typeLabels = { paper: '논문·연구 소개', news: '뉴스·기사 소개', works: '강의·저서·연구 원고 또는 칼럼', notice: '공지', other: '기타' };
   const statusLabels = { published: '공개', draft: '비공개·임시', trashed: '휴지통' };
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   const maxFileSize = 8 * 1024 * 1024;
@@ -265,7 +265,7 @@
     navigate(button.dataset.view);
   }));
   $$('[data-go]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.go)));
-  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { const preferred=$('#filter-type')?.value; resetEditor(); if(['paper','news','works'].includes(preferred))$('#post-type').value=preferred; updateResearchFields(); navigate('editor'); }));
+  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { resetEditor(); navigate('editor'); }));
   $('#menu-toggle').addEventListener('click', () => {
     const open = $('#sidebar').classList.toggle('open');
     $('#menu-toggle').setAttribute('aria-expanded', String(open));
@@ -448,11 +448,20 @@
     $('#post-date-help').textContent = isPaper ? '논문 발표 연도가 아니라 이 홈페이지에 공개할 날짜입니다.' : '홈페이지에 표시할 날짜입니다.';
   }
 
-  function generateRefNo(type) {
-    const refs = allPosts.filter(post => post.type === type).map(post => String(post.ref_no || '')).filter(ref => /^\d+$/.test(ref));
+  function nextRefNo(rows) {
+    const refs = rows.map(post => String(post.ref_no || '')).filter(ref => /^\d+$/.test(ref));
     const width = Math.max(4, ...refs.map(ref => ref.length));
-    const next = Math.max(0, ...refs.map(Number)) + 1;
+    const next = refs.reduce((max, ref) => { const value = BigInt(ref); return value > max ? value : max; }, 0n) + 1n;
     return String(next).padStart(width, '0');
+  }
+
+  async function resolveRefNo(type, preferred = '', currentId = '') {
+    const { data, error } = await db.from('posts').select('id,ref_no').eq('type', type);
+    if (error) throw error;
+    const otherRows = (data || []).filter(post => post.id !== currentId);
+    const candidate = String(preferred || '').trim();
+    if (candidate && !otherRows.some(post => String(post.ref_no) === candidate)) return candidate;
+    return nextRefNo(otherRows);
   }
 
   function selectedRecommendationIds() {
@@ -578,7 +587,7 @@
     const { image_url_2, image_alt_2, recommended_posts, ...canonical } = working;
     canonical.content_html = contentWithSecondImage(canonical.content_html, image_url_2, image_alt_2);
     canonical.content_html = contentWithRecommendations(canonical.content_html, recommended_posts);
-    return { ...canonical, status, ref_no: refNo, working_content: working, created_by: createdBy };
+    return { ...canonical, type: canonical.type || 'other', status, ref_no: refNo, working_content: working, created_by: createdBy };
   }
 
   function canonicalPayload(working, status) {
@@ -592,6 +601,12 @@
     catch (error) { if (mode !== 'autosave') showToast(error.message, true); setSaveState('입력 확인 필요', 'error'); return; }
     if (!working.title) {
       if (mode !== 'autosave') showToast('제목을 입력해 주세요.', true);
+      return;
+    }
+    if (mode === 'publish' && !working.type) {
+      showToast('글이 게시될 위치를 결정하려면 글 종류를 선택해 주세요.', true);
+      setSaveState('글 종류 선택 필요', 'error');
+      $('#post-type').focus();
       return;
     }
     saving = true;
@@ -618,20 +633,28 @@
         setFeaturedPreview(pending.slot, uploaded.publicUrl, pending.alt);
       }
       let id = $('#post-id').value;
-      let result;
-      if (!$('#post-ref').value.trim()) $('#post-ref').value = generateRefNo(working.type);
-      if (id) {
-        const existing = allPosts.find(post => post.id === id) || currentPost;
-        if (existing?.status === 'published' && mode !== 'publish') {
-          result = await db.from('posts').update({ working_content: working }).eq('id', id).select().single();
-        } else {
-          result = await db.from('posts').update(canonicalPayload(working, mode === 'publish' ? 'published' : 'draft')).eq('id', id).select().single();
+      const existing = id ? (allPosts.find(post => post.id === id) || currentPost) : null;
+      const canonicalWrite = !(id && existing?.status === 'published' && mode !== 'publish');
+      if (canonicalWrite) {
+        const storageType = working.type || 'other';
+        $('#post-ref').value = await resolveRefNo(storageType, $('#post-ref').value, id);
+      }
+      const writePost = async () => {
+        if (id) {
+          if (existing?.status === 'published' && mode !== 'publish') {
+            return db.from('posts').update({ working_content: working }).eq('id', id).select().single();
+          }
+          return db.from('posts').update(canonicalPayload(working, mode === 'publish' ? 'published' : 'draft')).eq('id', id).select().single();
         }
-      } else {
-        result = await db.from('posts').insert(canonicalPayload(working, mode === 'publish' ? 'published' : 'draft')).select().single();
-        id = result.data?.id;
+        return db.from('posts').insert(canonicalPayload(working, mode === 'publish' ? 'published' : 'draft')).select().single();
+      };
+      let result = await writePost();
+      if (result.error?.code === '23505' && canonicalWrite) {
+        $('#post-ref').value = await resolveRefNo(working.type || 'other', '', id);
+        result = await writePost();
       }
       if (result.error) throw result.error;
+      id = result.data?.id || id;
       $('#post-id').value = id;
       currentPost = result.data;
       dirty = false;
@@ -643,7 +666,7 @@
       else if (mode !== 'autosave') showToast(result.data.status === 'published' ? '편집 초안을 저장했습니다. 공개본은 유지됩니다.' : '임시 저장했습니다.');
     } catch (error) {
       setSaveState('저장 실패', 'error');
-      if (mode !== 'autosave') showToast(`저장하지 못했습니다: ${error.message}`, true);
+      if (mode !== 'autosave') showToast(error?.code === '23505' ? '자료 번호가 겹쳐 저장하지 못했습니다. 잠시 후 다시 저장해 주세요. 편집 내용은 그대로 유지됩니다.' : `저장하지 못했습니다: ${error.message}`, true);
     } finally {
       saving = false;
       ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = false; });
@@ -672,7 +695,7 @@
     $('#post-image-url').value = '';
     $('#post-image-url-2').value = '';
     $('#post-date').value = today();
-    $('#post-type').value = 'works';
+    $('#post-type').value = '';
     $('#post-category').value = '';
     $('#post-home-featured').checked = true;
     $('#post-home-order').value = '0';
