@@ -273,7 +273,7 @@
 
   function initEditor() {
     const Font = Quill.import('formats/font');
-    Font.whitelist = ['noto-sans', 'nanum-gothic', 'nanum-myeongjo', 'noto-serif', 'system-sans', 'system-serif'];
+    Font.whitelist = ['noto-sans', 'nanum-gothic', 'system-sans'];
     Quill.register(Font, true);
     const Size = Quill.import('attributors/class/size');
     Size.whitelist = ['body', 'large', 'xlarge'];
@@ -931,7 +931,7 @@
     const max = Math.max(1, ...counts.map(row => row.count));
     $('#category-summary').innerHTML = counts.length ? counts.map(row => `<div class="bar-row"><span>${escapeText(row.name)}</span><div class="bar-track"><i style="width:${row.count / max * 100}%"></i></div><strong>${row.count}</strong></div>`).join('') : '<div class="empty-state small">카테고리가 없습니다.</div>';
     const totalViews = viewRows.length;
-    $('#view-summary').innerHTML = totalViews ? `<strong style="font:700 34px var(--serif)">${totalViews}</strong><p>수집된 유효 조회</p>` : '아직 수집된 통계가 없습니다.';
+    $('#view-summary').innerHTML = totalViews ? `<strong style="font:700 34px var(--sans)">${totalViews}</strong><p>수집된 유효 조회</p>` : '아직 수집된 통계가 없습니다.';
   }
 
   $('#summary-cards').addEventListener('click', event => {
