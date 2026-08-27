@@ -7,11 +7,11 @@ const home=fs.readFileSync(new URL('../customer/index.html',import.meta.url),'ut
 const api=fs.readFileSync(new URL('../api/article.js',import.meta.url),'utf8');
 const moduleText=fs.readFileSync(new URL('../api/article-template.js',import.meta.url),'utf8');
 const template=JSON.parse(moduleText.replace(/^export default\s*/,'').replace(/;\s*$/,''));
-assert.match(adminHtml,/class="ql-font"/);assert.match(adminHtml,/class="ql-size"/);assert.match(adminHtml,/본문 조금 크게/);assert.match(adminHtml,/id="recommendation-list"/);
+assert.match(adminHtml,/class="ql-font"/);assert.match(adminHtml,/class="ql-size"/);assert.match(adminHtml,/title="문단 형식"/);assert.match(adminHtml,/title="글자 크기"/);assert.match(adminHtml,/title="서체"/);assert.match(adminHtml,/조금 크게/);assert.match(adminHtml,/본문 안의 소제목 형식/);assert.match(adminHtml,/id="recommendation-list"/);
 assert.match(adminCss,/min-width:40px;height:40px/);assert.match(adminCss,/ql-font-nanum-myeongjo/);assert.match(adminCss,/ql-size-xlarge/);
-assert.match(adminJs,/Font\.whitelist/);assert.match(adminJs,/Size\.whitelist/);assert.match(adminJs,/recommended_posts:\s*selectedRecommendationIds/);assert.match(adminJs,/slice\(0, 5\)/);assert.match(adminJs,/post\.status === 'published'/);assert.match(adminJs,/contentWithRecommendations/);assert.match(adminJs,/buildCanonicalPayload/);
+assert.match(adminJs,/Font\.whitelist/);assert.match(adminJs,/Size\.whitelist/);assert.match(adminJs,/recommended_posts:\s*selectedRecommendationIds/);assert.match(adminJs,/slice\(0, 5\)/);assert.match(adminJs,/post\.status === 'published'/);assert.match(adminJs,/contentWithRecommendations/);assert.match(adminJs,/data-dashboard-action/);assert.match(adminJs,/delete-permanently/);assert.match(adminJs,/_pre_trash_status/);assert.match(adminJs,/buildCanonicalPayload/);
 assert.match(api,/status=eq\.published/);assert.match(api,/renderRecommendations/);assert.match(api,/recommendedPosts = recommendationIds\.map/);
-assert.match(template,/protected-content/);assert.match(template,/copyright-notice/);assert.match(template,/무단 복제 및 재배포를 금합니다/);assert.match(template,/setupContentProtection/);assert.match(template,/\.recommendations/);assert.doesNotMatch(adminCss,/protected-content/);
+assert.match(template,/protected-content/);assert.match(template,/copyright-notice/);assert.match(template,/© 언어와 뇌\. 무단 복제 및 재배포를 금합니다/);assert.match(template,/setupContentProtection/);assert.match(template,/\.recommendations/);assert.doesNotMatch(adminCss,/protected-content/);
 assert.match(home,/href="\/admin">관리자/);assert.match(adminHtml,/공개 홈페이지 보기/);assert.match(home,/언어소외계층 국어능력향상 프로그램 강사<\/li>/);assert.doesNotMatch(home,/언어소외계층 국어능력향상 프로그램 강사\(前\)/);assert.match(home,/\.bio-group ul\{display:grid;gap:2px/);
 const recPattern=/<!--languagebrain-recommendations:([^>]*)-->/;
 const ids=['11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222'];

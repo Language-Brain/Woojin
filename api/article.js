@@ -49,7 +49,7 @@ function renderArticle(post) {
   const tags = post.tags?.length ? `<div class="tags">${post.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>` : '';
   const images = articleImages(post);
   const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" draggable="false">`).join('')}</div>` : '';
-  const copyright = '<p class="copyright-notice">© 권우진. 무단 복제 및 재배포를 금합니다.</p>';
+  const copyright = '<p class="copyright-notice">© 언어와 뇌. 무단 복제 및 재배포를 금합니다.</p>';
   const recommendations = renderRecommendations(post.recommendedPosts);
   return `<header class="article-head protected-content"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div>${gallery}</div></header><article class="wrap article-body protected-content">${body}${tags}${copyright}${recommendations}${shareMarkup()}</article>`;
 }

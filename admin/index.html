@@ -89,7 +89,7 @@
               <label for="post-excerpt">목록에 표시할 짧은 설명</label><textarea id="post-excerpt" class="excerpt-input" rows="3" placeholder="독자가 글의 핵심을 파악할 수 있도록 2~3문장으로 적어 주세요."></textarea>
               <div class="editor-label-row"><label>본문</label><span>이미지는 도구 모음의 그림 버튼으로 삽입할 수 있습니다.</span></div>
               <div id="toolbar">
-                <span class="ql-formats"><select class="ql-header" title="문단 스타일"><option value="1">제목 1</option><option value="2">제목 2</option><option value="3">제목 3</option><option selected>본문 기본</option></select><select class="ql-size" title="본문 크기"><option value="body" selected>본문 기본</option><option value="large">본문 조금 크게</option><option value="xlarge">본문 크게</option></select><select class="ql-font" title="글꼴"><option selected>기본 서체</option><option value="noto-sans">Noto Sans KR</option><option value="nanum-gothic">나눔고딕</option><option value="nanum-myeongjo">나눔명조</option><option value="noto-serif">Noto Serif KR</option><option value="system-sans">시스템 고딕</option><option value="system-serif">시스템 명조</option></select></span>
+                <span class="ql-formats"><select class="ql-header" title="문단 형식" aria-label="문단 형식"><option value="1">제목 1</option><option value="2">제목 2</option><option value="3">제목 3</option><option selected>본문</option></select><select class="ql-size" title="글자 크기" aria-label="글자 크기"><option value="body" selected>기본</option><option value="large">조금 크게</option><option value="xlarge">크게</option></select><select class="ql-font" title="서체" aria-label="서체"><option selected>기본 서체</option><option value="noto-sans">Noto Sans KR</option><option value="nanum-gothic">나눔고딕</option><option value="nanum-myeongjo">나눔명조</option><option value="noto-serif">Noto Serif KR</option><option value="system-sans">시스템 고딕</option><option value="system-serif">시스템 명조</option></select></span>
                 <span class="ql-formats"><button class="ql-bold" title="굵게"></button><button class="ql-italic" title="기울임"></button><button class="ql-underline" title="밑줄"></button><button class="ql-strike" title="취소선"></button></span>
                 <span class="ql-formats"><select class="ql-color" title="글자색"></select><select class="ql-background" title="강조색"></select></span>
                 <span class="ql-formats"><select class="ql-align" title="정렬"></select></span>
@@ -97,7 +97,7 @@
                 <span class="ql-formats"><button class="ql-link" title="링크"></button><button class="ql-image" title="이미지"></button><button class="ql-clean" title="서식 지우기"></button></span>
                 <span class="ql-formats"><button class="ql-undo" type="button" title="실행 취소">↶</button><button class="ql-redo" type="button" title="다시 실행">↷</button></span>
               </div>
-              <div id="editor" aria-label="본문 편집기"></div>
+              <p class="toolbar-help">제목 1·제목 2·제목 3은 글 전체의 제목이 아니라 본문 안의 소제목 형식입니다.</p><div id="editor" aria-label="본문 편집기"></div>
               <input id="inline-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
               <details class="research-fields" open>
                 <summary id="research-fields-title">논문 정보</summary>
@@ -129,7 +129,7 @@
       <section id="view-posts" class="view" data-view-section="posts">
         <header class="page-head"><div><p class="eyebrow">콘텐츠</p><h1><span id="post-management-title" style="font:inherit;color:inherit">글 관리</span> <span id="post-count"></span></h1><p>제목을 눌러 원고를 이어 쓰거나 공개 상태를 변경할 수 있습니다.</p></div><button class="button primary" data-open-editor type="button">새 자료 등록</button></header>
         <div class="filter-bar"><label class="search-field"><span>⌕</span><input id="post-search" type="search" placeholder="제목 검색"></label><select id="filter-type" aria-label="글 종류"><option value="all">모든 종류</option><option value="paper">해외 연구 소개</option><option value="works">글과 해설</option><option value="news">언어와 뇌 뉴스</option><option value="notice">공지</option><option value="other">기타</option></select><select id="filter-category" aria-label="카테고리"><option value="all">모든 카테고리</option></select><select id="filter-status" aria-label="공개 상태"><option value="active">휴지통 제외</option><option value="published">공개</option><option value="draft">비공개·임시</option><option value="trashed">휴지통</option><option value="all">전체</option></select><select id="post-sort" aria-label="정렬"><option value="updated-desc">최근 수정순</option><option value="published-desc">최근 공개순</option><option value="created-asc">오래된순</option></select></div>
-        <div class="table-wrap"><table class="post-table"><thead><tr><th>글</th><th>종류·카테고리</th><th>상태</th><th>작성일</th><th>최근 수정</th><th>이미지</th><th>관리</th></tr></thead><tbody id="post-table-body"></tbody></table><div id="post-empty" class="empty-state hidden">조건에 맞는 글이 없습니다.</div></div>
+        <div class="table-wrap"><table class="post-table"><thead><tr><th>글</th><th>종류·카테고리</th><th>상태</th><th>작성일</th><th>삭제·최근 수정</th><th>이미지</th><th>관리</th></tr></thead><tbody id="post-table-body"></tbody></table><div id="post-empty" class="empty-state hidden">조건에 맞는 글이 없습니다.</div></div>
         <button id="load-more-posts" class="button ghost load-more hidden" type="button">더 보기</button>
       </section>
 

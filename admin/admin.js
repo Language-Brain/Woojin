@@ -301,6 +301,12 @@
         history: { delay: 900, maxStack: 200, userOnly: true }
       }
     });
+    [['.ql-header', '문단 형식'], ['.ql-size', '글자 크기'], ['.ql-font', '서체']].forEach(([selector, label]) => {
+      const picker = document.querySelector('#toolbar ' + selector);
+      const pickerLabel = picker?.querySelector('.ql-picker-label');
+      if (picker) picker.setAttribute('aria-label', label);
+      if (pickerLabel) { pickerLabel.title = label; pickerLabel.setAttribute('aria-label', label); }
+    });
     function updateColorIndicators(format = {}) {
       const color = format.color || '#172033';
       const background = format.background || '#ffffff';
@@ -836,12 +842,12 @@
   function renderPostTable() {
     if (!$('#post-table-body')) return;
     const selectedType=$('#filter-type').value;
-    $('#post-management-title').textContent=({paper:'논문 관리',news:'뉴스 관리',works:'연구 원고 관리'})[selectedType]||'글 관리';
+    $('#post-management-title').textContent=$('#filter-status').value==='trashed'?'휴지통':(({paper:'논문 관리',news:'뉴스 관리',works:'연구 원고 관리'})[selectedType]||'글 관리');
     $$('.nav-item[data-view="posts"]').forEach(button=>button.classList.toggle('active',(button.dataset.postType||'all')===selectedType));
     const rows = filteredPosts();
-    $('#post-count').textContent = allPosts.length ? allPosts.length : '';
+    $('#post-count').textContent = rows.length ? (rows.length + '건') : '';
     const visible = rows.slice(0, visiblePostLimit);
-    $('#post-table-body').innerHTML = visible.map(post => `<tr><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(statusLabels[post.status] || post.status)}</span></td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $('#post-table-body').innerHTML = visible.map(post => `<tr><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '비공개·임시' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
   }
@@ -853,17 +859,24 @@
     if (!button) return;
     const { action, id } = button.dataset;
     if (action === 'edit') return openEditor(id);
-    if (action === 'preview-live') {
+    if (action === 'preview-live' || action === 'preview-trash') {
       const post = allPosts.find(row => row.id === id);
-      if (post?.status === 'published') return window.open(`/article?id=${encodeURIComponent(id)}`, '_blank', 'noopener');
+      if (action === 'preview-live' && post?.status === 'published') return window.open(`/article?id=${encodeURIComponent(id)}`, '_blank', 'noopener');
       openEditor(id);
       return setTimeout(renderPreview, 80);
+    }
+    if (action === 'delete-permanently') {
+      const post = allPosts.find(item => item.id === id);
+      if (!confirm('「' + (post?.title || '이 글') + '」을 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+      const { error } = await db.from('posts').delete().eq('id', id).eq('status', 'trashed');
+      if (error) showToast(error.message, true); else { await loadPosts(); showToast('글을 영구 삭제했습니다.'); }
+      return;
     }
     if (action === 'trash' && !confirm('이 글을 휴지통으로 옮길까요? 나중에 복구할 수 있습니다.')) return;
     if (action === 'unpublish' && !confirm('이 글을 비공개로 전환할까요?')) return;
     let changes = null;
-    if (action === 'trash') changes = { status: 'trashed', deleted_at: new Date().toISOString() };
-    if (action === 'restore') changes = { status: 'draft', deleted_at: null };
+    if (action === 'trash') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; workingContent._pre_trash_status = post?.status || 'draft'; changes = { status: 'trashed', deleted_at: new Date().toISOString(), working_content: workingContent }; }
+    if (action === 'restore') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; const restoredStatus = workingContent._pre_trash_status === 'published' ? 'published' : 'draft'; delete workingContent._pre_trash_status; changes = { status: restoredStatus, deleted_at: null, working_content: workingContent }; }
     if (action === 'unpublish') changes = { status: 'draft' };
     if (action === 'publish') {
       const post = allPosts.find(item => item.id === id);
@@ -886,9 +899,9 @@
       ['전체 글', active.length, '휴지통 제외'],
       ['공개 글', active.filter(post => post.status === 'published').length, '방문자에게 보임'],
       ['비공개·임시', active.filter(post => post.status === 'draft').length, '관리자만 확인'],
-      ['휴지통', allPosts.filter(post => post.status === 'trashed').length, '복구 가능']
+      ['휴지통', allPosts.filter(post => post.status === 'trashed').length, '눌러서 확인·복구', 'trash']
     ];
-    $('#summary-cards').innerHTML = cards.map(([label, value, note]) => `<article class="summary-card"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+    $('#summary-cards').innerHTML = cards.map(([label, value, note, action]) => action ? `<button class="summary-card summary-card-button" data-dashboard-action="${action}" type="button"><span>${label}</span><strong>${value}</strong><small>${note}</small></button>` : `<article class="summary-card"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
     renderCompact('#recent-updated', [...active].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 5));
     renderCompact('#recent-published', active.filter(post => post.status === 'published').sort((a, b) => String(b.published_at).localeCompare(String(a.published_at))).slice(0, 5));
     const counts = categories.map(category => ({ name: category.name, count: active.filter(post => post.category === category.name).length }));
@@ -897,6 +910,12 @@
     const totalViews = viewRows.length;
     $('#view-summary').innerHTML = totalViews ? `<strong style="font:700 34px var(--serif)">${totalViews}</strong><p>수집된 유효 조회</p>` : '아직 수집된 통계가 없습니다.';
   }
+
+  $('#summary-cards').addEventListener('click', event => {
+    const button = event.target.closest('[data-dashboard-action="trash"]');
+    if (!button) return;
+    $('#post-search').value = ''; $('#filter-type').value = 'all'; $('#filter-category').value = 'all'; $('#filter-status').value = 'trashed'; visiblePostLimit = 20; navigate('posts'); renderPostTable();
+  });
 
   function renderCompact(selector, rows) {
     $(selector).innerHTML = rows.length ? rows.map(post => `<div class="compact-item"><button data-edit-post="${post.id}" type="button">${escapeText(post.title)}</button><span>${escapeText(formatDate(post.updated_at))}</span></div>`).join('') : '<div class="empty-state small">표시할 글이 없습니다.</div>';
