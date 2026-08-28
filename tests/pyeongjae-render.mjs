@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import handler from '../api/pyeongjae.js';
+const id='11111111-1111-4111-8111-111111111111';
+const row={id,book_no:3,volume_no:6,start_page:63,end_page:63,side:'front',genre:'제문',work_title:'제문',title:'평재문집 공개 번역 시험',summary:'일제강점기 문집의 공개 번역',people:['권태직'],places:['서울'],tags:['평재문집'],review_status:'판독 검토 필요',status:'published',source_order:630,view_count:2,created_at:'2026-08-28T00:00:00Z',updated_at:'2026-08-28T01:00:00Z',pages:[{page:63,side:'front',genre:'제문',work_title:'제문',marker:'〔판독 불확실〕',original_reading:'漢文\n<script>alert(1)</script>',literal_translation:'직역',interpretive_translation:'의역',notes:'참고'}],reference_links:[{label:'관련 문헌',url:'https://example.com'}]};
+const originalFetch=global.fetch;global.fetch=async url=>({ok:true,status:200,json:async()=>String(url).includes('select=id%2Cvolume')?[{id,volume_no:6,source_order:630,start_page:63,status:'published'}]:[row]});
+let body='',status=0,headers={};const response={setHeader:(k,v)=>headers[k]=v,status:n=>{status=n;return response},send:v=>{body=v;return response}};
+await handler({query:{id}},response);global.fetch=originalFetch;
+assert.equal(status,200);assert.equal(headers['Content-Type'],'text/html; charset=utf-8');
+for(const text of ['평재문집 공개 번역 시험','漢文','직역','의역','참고','권태직','서울','canonical','ScholarlyArticle','article:tag','정정·제보하기'])assert.ok(body.includes(text),text);
+assert.ok(body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));assert.ok(!body.includes('<script>alert(1)</script>'));
+console.log('pyeongjae server render: PASS');
