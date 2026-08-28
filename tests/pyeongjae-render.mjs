@@ -10,7 +10,7 @@ await handler({query:{id}},response);
 global.fetch=originalFetch;
 assert.equal(status,200);
 assert.equal(headers['Content-Type'],'text/html; charset=utf-8');
-for(const text of ['평재문집 제1책 제1장 앞면','권1','시','조회 0','원문과 음독','漢文','현대어 직역','직역','참고','canonical','ScholarlyArticle'])assert.ok(body.includes(text),text);
+for(const text of ['평재문집 제1책 제1장 앞면','권1','시','조회 0','원문과 음독','漢文','현대어 직역','직역','참고','canonical','ScholarlyArticle','reader-nav-primary','제1책 · 제1장 · 앞면 · 시','reader-nav-20260828-1'])assert.ok(body.includes(text),text);
 assert.ok(body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
 assert.ok(!body.includes('<script>alert(1)</script>'));
 assert.ok(!body.includes('현대어 의역'));

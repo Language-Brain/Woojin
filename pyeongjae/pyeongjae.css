@@ -18,3 +18,12 @@
 .original div{white-space:pre-wrap;line-height:1.75}
 @media(max-width:600px){.site-header{height:auto;min-height:54px;padding:9px 18px;gap:12px}.site-header nav{gap:13px}.archive{width:calc(100% - 36px);padding-top:18px}.intro-line h1{font-size:25px}.controls{position:static}.face-row{grid-template-columns:1fr;gap:3px;padding:11px 2px;min-height:64px}.face-title{font-size:17px;line-height:1.48}.face-meta{font-size:14px;white-space:normal}.reader{width:100%;padding:18px 19px 56px}.reader-head h1{font-size:24px;line-height:1.45;overflow-wrap:break-word}.reader-kicker{font-size:13px;line-height:1.55;letter-spacing:0}.reader-meta,.reader-tags{font-size:14px;line-height:1.55}.reader-nav{font-size:13px;gap:8px}.page-block{padding-top:17px}.page-label{font-size:14px;line-height:1.55}.text-part{padding:12px 0}.text-part h3{font-size:17px}.text-part div{font-size:18px;line-height:1.72}.bookmark-tabs button{min-height:42px}.genre-tabs button{min-height:38px;font-size:13px}.filter-row input,.filter-row select{font-size:16px;min-height:44px}.pagination button{min-width:40px;height:40px}}
 @media(max-width:380px){.archive{width:calc(100% - 32px)}.reader{padding-left:18px;padding-right:18px}.face-title{font-size:16px}.reader-head h1{font-size:22px}.text-part div{font-size:17px}}
+
+/* Prominent, calm navigation at the top of each manuscript */
+.reader-nav-primary{grid-template-columns:1fr auto 1fr;padding:13px 0;font-size:22px;line-height:1.45;color:#2b706c}
+.reader-nav-primary a{display:inline-flex;align-items:center;min-height:44px;padding:7px 10px;border-radius:5px;color:#2b706c;text-decoration:none;font-weight:500;transition:color .16s ease,background-color .16s ease}
+.reader-nav-primary .reader-position{justify-self:center;text-align:center}
+.reader-nav-primary .reader-next{justify-self:end;text-align:right}
+.reader-nav-primary a:hover{color:#1e5956;background:#e8f2f0}
+.reader-nav-primary a:focus-visible{color:#1e5956;background:#e8f2f0;outline:3px solid rgba(43,112,108,.3);outline-offset:2px}
+@media(max-width:600px){.reader-nav-primary{grid-template-columns:1fr 1fr;grid-template-areas:"position position" "prev next";gap:2px 8px;padding:9px 0;font-size:18px}.reader-nav-primary .reader-position{grid-area:position;justify-self:center;min-height:40px;font-size:18px}.reader-nav-primary .reader-prev{grid-area:prev;justify-self:start}.reader-nav-primary .reader-next{grid-area:next;justify-self:end}.reader-nav-primary a{min-width:0;min-height:42px;padding:6px 7px;white-space:normal;word-break:keep-all}}
