@@ -12,7 +12,8 @@ const vercel=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url
 assert.ok(home.indexOf('<section class="guide-search-zone"')>home.indexOf('<section class="books-zone"'));
 assert.ok(home.indexOf('<section class="guide-search-zone"')<home.indexOf('id="about"'));
 for(const value of ['문서를 찾아보세요','href="/guides">자료 안내','href="/guides?scope=pyeongjae">평재문집 목록'])assert.ok(home.includes(value),value);
-for(const value of ['title','description','body','course_name','institution_name','tags','visibility=eq.public','showError','retry-guides','pageshow',"scope = validScopes.has",'search();'])assert.ok(searchJs.includes(value),value);
+for(const value of ['title','description','body','course_name','institution_name','tags','visibility=eq.public','showError','retry-guides','pageshow',"scope = validScopes.has",'search();','pyeongjaeItem','face-row','face-meta'])assert.ok(searchJs.includes(value),value);
+assert.ok(search.includes('/pyeongjae/list-row.css'));
 assert.doesNotMatch(searchJs,/visibility=eq.unlisted/);
 for(const value of ['get_unlisted_guide','noopener noreferrer','navigator.share','increment_guide_view'])assert.ok(detail.includes(value),value);
 for(const value of ['data-view="guides"','id="guide-form"','id="guide-admin-search"','id="guide-admin-sort"'])assert.ok(admin.includes(value),value);

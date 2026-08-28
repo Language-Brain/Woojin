@@ -57,6 +57,24 @@
     return link;
   }
 
+  function pyeongjaeItem(row, number) {
+    const link = document.createElement('a');
+    link.className = 'entry-row face-row';
+    link.href = '/pyeongjae-entry?id=' + encodeURIComponent(row.id);
+    const sequence = document.createElement('span');
+    sequence.className = 'face-number';
+    sequence.textContent = number;
+    sequence.setAttribute('aria-label', `전체 평재문집 순차 번호 ${number}`);
+    const title = document.createElement('strong');
+    title.className = 'face-title';
+    title.textContent = row.title;
+    const meta = document.createElement('span');
+    meta.className = 'face-meta';
+    meta.textContent = `${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${row.genre || '종류 미확인'} · 조회 ${Number(row.view_count || 0).toLocaleString()}`;
+    link.append(sequence, title, meta);
+    return link;
+  }
+
   async function loadTags() {
     try {
       const rows = await rest('guide_tags', 'select=name&is_visible=eq.true&order=display_order.asc&limit=12');
@@ -82,7 +100,7 @@
     const sorted = rows.sort(compare);
     const ordinals = new Map(sorted.map((row, index) => [row.id, index + 1]));
     return sorted.filter(row => match([row.title, row.work_title, row.summary, ...(Array.isArray(row.people) ? row.people : []), ...(Array.isArray(row.places) ? row.places : []), ...(Array.isArray(row.tags) ? row.tags : []), JSON.stringify(row.pages || [])].join(' ')))
-      .map(row => item({ href: '/pyeongjae-entry?id=' + encodeURIComponent(row.id), title: row.title, description: '', tags: [], number: ordinals.get(row.id), meta: `${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${row.genre || '종류 미확인'} · 조회 ${Number(row.view_count || 0).toLocaleString()}` }));
+      .map(row => pyeongjaeItem(row, ordinals.get(row.id)));
   }
 
   function setUrl() {

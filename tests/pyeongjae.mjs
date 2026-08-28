@@ -6,6 +6,7 @@ const face=fs.readFileSync(new URL('../supabase/migrations/20260828_pyeongjae_fa
 const archive=fs.readFileSync(new URL('../pyeongjae/index.html',import.meta.url),'utf8');
 const archiveJs=fs.readFileSync(new URL('../pyeongjae/archive-list.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../pyeongjae/pyeongjae.css',import.meta.url),'utf8');
+const rowCss=fs.readFileSync(new URL('../pyeongjae/list-row.css',import.meta.url),'utf8');
 const detail=fs.readFileSync(new URL('../api/pyeongjae.js',import.meta.url),'utf8');
 const admin=fs.readFileSync(new URL('../admin/index.html',import.meta.url),'utf8');
 const adminJs=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
@@ -21,6 +22,8 @@ for(const text of ['pjBookSheetCompare','pjAutoTitle','pjDuplicateWarning','원�
 for(const text of ['ScholarlyArticle','canonical','status=eq.published','현대어 직역',"section('원문과 음독'",'faceLabel','reader-bottom-position'])assert.ok(detail.includes(text),text);
 assert.ok(sitemap.includes('pyeongjae-entry')&&sitemap.includes('status=eq.published'));
 for(const text of ['.face-row','.face-title','.face-meta','.face-number','@media(max-width:600px)','padding:18px 19px'])assert.ok(css.includes(text),text);
+for(const text of ['grid-template-columns:42px minmax(0,1fr) minmax(190px,220px)','justify-self:end','text-align:right','grid-template-rows:auto auto','white-space:nowrap'])assert.ok(rowCss.includes(text),text);
+assert.ok(archive.includes('/pyeongjae/list-row.css'));
 new Function(adminJs);
 new Function(archiveJs);
 const sample=[{book_no:1,sheet_no:2,side:'back'},{book_no:1,sheet_no:1,side:'back'},{book_no:1,sheet_no:1,side:'front'},{book_no:1,sheet_no:2,side:'front'}];
