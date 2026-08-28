@@ -7,7 +7,7 @@ export default async function handler(request, response) {
       supabaseRows('videos', 'select=id,updated_at,published_at&status=eq.published&order=updated_at.desc'),
       supabaseRows('guides', 'select=id,updated_at&status=eq.active&visibility=eq.public&order=updated_at.desc')
     ]);
-    const fixed = ['/', '/papers', '/news', '/works', '/videos', '/guides'].map(path => ({ loc: `${SITE_URL}${path}` }));
+    const fixed = ['/', '/papers', '/news', '/works', '/videos', '/search', '/guides'].map(path => ({ loc: `${SITE_URL}${path}` }));
     const entries = [
       ...fixed,
       ...posts.map(post => ({ loc: publicArticleUrl(post.id), lastmod: post.updated_at || post.published_at })),

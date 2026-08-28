@@ -12,6 +12,15 @@ function safeContent(value) {
     .replace(/javascript\s*:/gi, '');
 }
 
+function normalizedTags(value) {
+  const seen = new Set();
+  return (Array.isArray(value) ? value : []).map(tag => String(tag || '').trim().replace(/^#+\s*/, '')).filter(tag => {
+    const key = tag.toLocaleLowerCase('ko-KR');
+    if (!tag || seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
+
 function shareMarkup() {
   return '<div class="share-area"><button class="share-button" type="button" aria-label="공유하기"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"></path></svg><span>공유하기</span></button><p class="share-status" role="status" aria-live="polite"></p><a class="share-fallback" hidden>주소 직접 열기</a></div>';
 }
@@ -46,7 +55,8 @@ function renderRecommendations(rows) {
 function renderArticle(post) {
   const type = TYPE_LABELS[post.type] || '연구 글';
   const body = post.content_html ? safeContent(post.content_html) : `<p>${escapeHtml(post.excerpt || '본문을 준비하고 있습니다.')}</p>`;
-  const tags = post.tags?.length ? `<div class="tags">${post.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>` : '';
+  const cleanTags = normalizedTags(post.tags);
+  const tags = cleanTags.length ? `<div class="tags">${cleanTags.map(tag => `<a class="tag" href="/search?q=${encodeURIComponent(tag)}">#${escapeHtml(tag)}</a>`).join('')}</div>` : '';
   const images = articleImages(post);
   const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" draggable="false">`).join('')}</div>` : '';
   const copyright = '<p class="copyright-notice">© 언어와 뇌. 무단 복제 및 재배포를 금합니다.</p>';

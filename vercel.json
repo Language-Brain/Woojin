@@ -17,6 +17,7 @@
     { "source": "/works", "destination": "/archive/index.html" },
     { "source": "/videos", "destination": "/archive/index.html" },
     { "source": "/video", "destination": "/video/index.html" },
+    { "source": "/search", "destination": "/search/index.html" },
     { "source": "/guides", "destination": "/guides/index.html" },
     { "source": "/guide", "destination": "/guide/index.html" }
   ],
