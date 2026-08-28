@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const html=fs.readFileSync(new URL('../admin/index.html',import.meta.url),'utf8');
+const js=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
+for(const id of ['new-pyeongjae','pyeongjae-form','pj-book','pj-sheet','pj-genre','pj-title','pj-page-editor','pj-preview']) assert.ok(html.includes(`id="${id}"`),id);
+assert.ok(js.includes("$('#new-pyeongjae')?.addEventListener('click'"));
+assert.ok(js.includes("function pjRenderPage(){const box=$('#pj-page-editor')"));
+assert.ok(js.includes("$('#pyeongjae-form').classList.remove('hidden')"));
+new Function(js);
+console.log('pyeongjae admin launch: PASS');
