@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const home=fs.readFileSync(new URL('../customer/index.html',import.meta.url),'utf8');
+const admin=fs.readFileSync(new URL('../admin/index.html',import.meta.url),'utf8');
+const js=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
+const search=fs.readFileSync(new URL('../guides/index.html',import.meta.url),'utf8');
+const detail=fs.readFileSync(new URL('../guide/index.html',import.meta.url),'utf8');
+const migration=fs.readFileSync(new URL('../supabase/migrations/20260828_guides.sql',import.meta.url),'utf8');
+const vercel=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
+assert.ok(home.indexOf('<section class="guide-search-zone"')>home.indexOf('<section class="books-zone"'));
+assert.ok(home.indexOf('<section class="guide-search-zone"')<home.indexOf('id="about"'));
+assert.match(home,/문서를 찾아보세요/);
+for(const value of ['title','description','body','course_name','institution_name','tags'])assert.ok(search.includes(value));
+assert.match(search,/visibility','public/);assert.doesNotMatch(search,/visibility','unlisted/);
+assert.match(detail,/get_unlisted_guide/);assert.match(detail,/noopener noreferrer/);assert.match(detail,/navigator\.share/);assert.match(detail,/increment_guide_view/);
+for(const value of ['data-view="guides"','id="guide-form"','id="guide-admin-search"','id="guide-admin-sort"'])assert.ok(admin.includes(value));
+for(const value of ['loadGuides','loadGuideTags','data-guide-action="trash"','data-guide-action="restore"','data-guide-action="delete"','guideTagEdit'])assert.ok(js.includes(value));
+assert.match(migration,/visibility='public'\) or public\.is_admin/);
+assert.match(migration,/get_unlisted_guide/);assert.match(migration,/access_token=p_token/);
+assert.doesNotMatch(migration,/drop table|truncate/i);
+assert.ok(vercel.rewrites.some(x=>x.source==='/guides'));assert.ok(vercel.rewrites.some(x=>x.source==='/guide'));
+new Function(js);
+for(const page of [home,search,detail]){[...page.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(x=>x.trim()).forEach(x=>new Function(x))}
+console.log('guides: PASS');
