@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const home=fs.readFileSync(new URL('../customer/index.html',import.meta.url),'utf8');
 const admin=fs.readFileSync(new URL('../admin/index.html',import.meta.url),'utf8');
+const adminCss=fs.readFileSync(new URL('../admin/admin.css',import.meta.url),'utf8');
 const js=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
 const search=fs.readFileSync(new URL('../guides/index.html',import.meta.url),'utf8');
 const detail=fs.readFileSync(new URL('../guide/index.html',import.meta.url),'utf8');
@@ -14,6 +15,7 @@ for(const value of ['title','description','body','course_name','institution_name
 assert.match(search,/visibility','public/);assert.doesNotMatch(search,/visibility','unlisted/);
 assert.match(detail,/get_unlisted_guide/);assert.match(detail,/noopener noreferrer/);assert.match(detail,/navigator\.share/);assert.match(detail,/increment_guide_view/);
 for(const value of ['data-view="guides"','id="guide-form"','id="guide-admin-search"','id="guide-admin-sort"'])assert.ok(admin.includes(value));
+assert.ok(adminCss.includes('.side-nav')&&adminCss.includes('overflow-y:auto'),'관리자 메뉴는 작은 화면에서도 독립 스크롤되어야 합니다.');
 for(const value of ['loadGuides','loadGuideTags','data-guide-action="trash"','data-guide-action="restore"','data-guide-action="delete"','guideTagEdit'])assert.ok(js.includes(value));
 assert.match(migration,/visibility='public'\) or public\.is_admin/);
 assert.match(migration,/get_unlisted_guide/);assert.match(migration,/access_token=p_token/);
