@@ -19,6 +19,10 @@ assert.match(home, /\^https\?:\$/);
 
 for (const needle of ['data-view="books"', 'id="view-books"', 'id="book-form"', 'id="book-search"', 'id="book-filter-status"', 'id="book-preview-dialog"']) assert.ok(admin.includes(needle), needle);
 for (const needle of ['function cleanBookUrl', 'function similarBookTitles', 'async function loadBooks', "data-book-action=\"trash\"", "data-book-action=\"restore\"", "data-book-action=\"up\"", 'uploadImage(file']) assert.ok(adminJs.includes(needle), needle);
+assert.match(adminJs, /function normalizeBookLinks/);
+assert.ok(adminJs.includes("const links = $$('.book-link-row').map"));
+assert.ok(adminJs.includes('exactDuplicate'));
+assert.ok(!adminJs.includes("const links = $('.book-link-row').map"));
 assert.match(adminCss, /\.compact-book-form/);
 assert.match(adminCss, /@media\(max-width:720px\)/);
 

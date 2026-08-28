@@ -1287,6 +1287,17 @@
     } catch { return ''; }
   }
 
+  function normalizeBookLinks(value) {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    if (typeof value === 'object') return [value];
+    if (typeof value === 'string') {
+      try { return normalizeBookLinks(JSON.parse(value)); }
+      catch { return cleanBookUrl(value) ? [{ label: '외부에서 보기', url: value }] : []; }
+    }
+    return [];
+  }
+
   function normalizedBookTitle(value) { return String(value || '').toLocaleLowerCase('ko-KR').replace(/[\\s·:：,.'\"“”‘’()\\[\\]{}_-]+/g, ''); }
   function similarBookTitles(value, ignoredId = '') {
     const target = normalizedBookTitle(value);
@@ -1326,14 +1337,15 @@
       $('#book-description').value = book.description || ''; $('#book-cover-url').value = book.cover_url || ''; $('#book-status').value = book.status === 'published' ? 'published' : 'draft';
       $('#book-order').value = book.display_order ?? 0; $('#book-pinned').checked = !!book.is_pinned; $('#book-publisher').value = book.publisher || '';
       $('#book-year').value = book.publication_year || ''; $('#book-isbn').value = book.isbn || ''; $('#book-note').value = book.admin_note || '';
-      $('#book-links-editor').replaceChildren(); (Array.isArray(book.links) && book.links.length ? book.links : [{}]).forEach(addBookLinkRow);
+      const storedLinks = normalizeBookLinks(book.links);
+      $('#book-links-editor').replaceChildren(); (storedLinks.length ? storedLinks : [{}]).forEach(addBookLinkRow);
       setBookCoverPreview(book.cover_url, '등록된 표지'); $('#book-form-title').textContent = '책 수정';
     }
     $('#book-form').classList.remove('hidden'); $('#book-title').focus(); window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function collectBookLinks() {
-    const links = $('.book-link-row').map(row => ({ label: row.querySelector('[data-book-link-label]').value.trim(), url: cleanBookUrl(row.querySelector('[data-book-link-url]').value) })).filter(link => link.label || link.url);
+    const links = $$('.book-link-row').map(row => ({ label: row.querySelector('[data-book-link-label]').value.trim(), url: cleanBookUrl(row.querySelector('[data-book-link-url]').value) })).filter(link => link.label || link.url);
     if (links.some(link => !link.label || !link.url)) throw new Error('각 외부 링크의 연결처 이름과 올바른 http 또는 https 주소를 모두 입력해 주세요.');
     return links;
   }
@@ -1343,7 +1355,7 @@
     const image = document.createElement('img'); image.src = book.cover_url || ($('#book-cover-preview img')?.src || ''); image.alt = `${book.title} 책 표지`;
     const copy = document.createElement('div'), title = document.createElement('h2'), author = document.createElement('p'), description = document.createElement('p');
     title.textContent = book.title || '제목 없음'; author.textContent = book.author || '저자 없음'; description.textContent = book.description || '';
-    copy.append(title, author, description); const safeLinks = (book.links || []).map(link => ({ label: link.label, url: cleanBookUrl(link.url) })).filter(link => link.url);
+    copy.append(title, author, description); const safeLinks = normalizeBookLinks(book.links).map(link => ({ label: String(link?.label || '외부에서 보기'), url: cleanBookUrl(link?.url) })).filter(link => link.url);
     if (safeLinks.length) { const nav = document.createElement('nav'); safeLinks.forEach(link => { const a = document.createElement('a'); a.href = link.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = link.label; nav.append(a); }); copy.append(nav); }
     content.append(image, copy); $('#book-preview-dialog').showModal();
   }
@@ -1378,7 +1390,10 @@
     const id = $('#book-id').value, title = $('#book-title').value.trim(), author = $('#book-author').value.trim(), file = $('#book-cover').files[0];
     if (!title || !author) return message.textContent = '책 제목과 저자를 입력해 주세요.';
     if (!file && !$('#book-cover-url').value) return message.textContent = '직접 업로드할 책 표지를 선택해 주세요.';
-    const duplicates = similarBookTitles(title, id); if (duplicates.length && !confirm(`“${duplicates[0].title}”과 같거나 매우 비슷한 책이 있습니다. 그래도 저장할까요?`)) return;
+    const duplicates = similarBookTitles(title, id);
+    const exactDuplicate = duplicates.find(book => normalizedBookTitle(book.title) === normalizedBookTitle(title) && normalizedBookTitle(book.author) === normalizedBookTitle(author));
+    if (!id && exactDuplicate) return message.textContent = '같은 제목과 저자의 책이 이미 저장되어 있어 중복 저장하지 않았습니다. 아래 목록에서 기존 책의 수정 버튼을 이용해 주세요.';
+    if (duplicates.length && !confirm(`“${duplicates[0].title}”과 제목이 비슷합니다. 개정판·동명 도서가 맞다면 확인을 눌러 저장해 주세요.`)) return;
     let links; try { links = collectBookLinks(); } catch (error) { return message.textContent = error.message; }
     button.disabled = true; message.textContent = '책 정보를 저장하고 있습니다.';
     try {
