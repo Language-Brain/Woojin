@@ -20,6 +20,8 @@ assert.match(admin,/replace\(\/\^#\+\\s\*\//);
 assert.match(admin,/tags: normalizeTags\(\$\('#post-tags'\)\.value\)/);
 assert.match(admin,/tags:normalizeTags\(\$\('#guide-tags'\)\.value\)/);
 assert.match(article,/href="\/search\?q=\$\{encodeURIComponent\(tag\)\}"/);
+assert.match(article,/keywords: seoTags\.length \? seoTags : undefined/);
+assert.match(article,/property="article:tag"/);
 assert.match(template,/href=\\"\/search\?q=\$\{encodeURIComponent\(tag\)\}\\"/);
 for(const field of ['title','excerpt','content_html','tags'])assert.ok(search.includes(field));
 assert.match(search,/\.eq\('status','published'\)/);
