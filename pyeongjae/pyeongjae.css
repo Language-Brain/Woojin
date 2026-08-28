@@ -31,3 +31,6 @@
 .face-number{font-size:16px;font-weight:700;color:#286d68;text-align:center;white-space:nowrap}
 .reader-bottom-position{margin:20px 0 4px;text-align:center;color:#286d68;font-size:17px;line-height:1.5;word-break:keep-all}
 @media(max-width:600px){.face-row{grid-template-columns:34px minmax(0,1fr);gap:3px 8px}.face-number{grid-row:1 / span 2;align-self:start;padding-top:2px;font-size:15px}.face-title,.face-meta{min-width:0}.face-title{word-break:keep-all;overflow-wrap:break-word}.reader-bottom-position{margin-top:16px;font-size:16px}}
+.route-error{margin:18px 0;padding:18px;border:1px solid #cbd4d1;background:#fff;color:#394744;line-height:1.6}
+.route-error strong{font-size:17px}.route-error p{margin:5px 0 12px}.route-error div{display:flex;gap:8px;flex-wrap:wrap}
+.route-error button,.route-error a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border:1px solid #286d68;background:#fff;color:#286d68;font:700 14px inherit;text-decoration:none;cursor:pointer}

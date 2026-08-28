@@ -1,0 +1,4 @@
+.guide-direct-links{display:flex;justify-content:center;gap:8px;margin:-2px 0 10px}
+.guide-direct-links a{display:inline-flex;align-items:center;min-height:36px;padding:6px 11px;border:1px solid #c8d1d8;border-radius:18px;color:#123b70;background:#fff;font:700 13px/1.2 "Nanum Gothic","Noto Sans KR","Malgun Gothic",sans-serif}
+.guide-direct-links a:hover,.guide-direct-links a:focus-visible{background:#edf2f7;border-color:#8da0b2}
+@media(max-width:760px){.guide-direct-links{justify-content:flex-start;overflow-x:auto}.guide-direct-links a{white-space:nowrap}}

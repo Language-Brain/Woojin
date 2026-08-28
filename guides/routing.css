@@ -1,0 +1,10 @@
+.scope-tabs{display:flex;gap:6px;margin:12px 0 0;overflow-x:auto}
+.scope-tabs button{width:auto;min-height:38px;border:1px solid #cbd1d5;border-radius:18px;padding:7px 13px;background:#fff;color:var(--navy);font:700 13px inherit;white-space:nowrap;cursor:pointer}
+.scope-tabs button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.archive-link{display:inline-block;margin-top:10px;color:var(--navy);font-size:13px;font-weight:800}
+.result h3{display:flex;align-items:baseline;gap:10px}
+.result-sequence{min-width:28px;color:#286d68;font-size:15px;text-align:center}
+.route-error{margin:22px 0;padding:18px;border:1px solid #cbd4d1;background:#fff;color:#394744;line-height:1.6}
+.route-error p{margin:5px 0 12px}.route-error div{display:flex;gap:8px;flex-wrap:wrap}
+.route-error button,.route-error a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border:1px solid var(--navy);background:#fff;color:var(--navy);font:700 14px inherit;text-decoration:none;cursor:pointer}
+@media(max-width:620px){.scope-tabs{scrollbar-width:thin}.result h3{align-items:flex-start}.result-sequence{min-width:24px}}
