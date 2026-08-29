@@ -13,6 +13,7 @@ assert.match(js,/function listSummary\(row\)/,'archive lists need one shared aut
 assert.match(js,/row\.content_html\|\|row\.content/,'the fallback summary must read the saved body');
 assert.match(js,/querySelectorAll\('script,style,noscript,img,picture,figure,figcaption,table,pre,code/,'unsafe and non-prose elements must be removed');
 assert.match(js,/text\.length>=18/,'very short metadata fragments must be skipped');
+assert.match(js,/row\.original_title,row\.authors,row\.journal,row\.source,row\.publisher/,'paper titles, authors, journals, and sources must be skipped');
 assert.match(js,/_listSummary:listSummary\(row\)/,'summaries must be calculated once when rows load');
 assert.match(js,/if\(kind==='papers'\|\|kind==='news'\) return compactPostCard\(row\)/);
 assert.match(js,/문해, 한국어 교육, 디지털리터러시, 인지 능력 등과 관련한 뉴스를 살펴봅니다\./);

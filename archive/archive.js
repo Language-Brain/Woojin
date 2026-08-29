@@ -47,10 +47,10 @@
     const html=String(row.content_html||row.content||'').trim(); if(!html)return emptySummary;
     const doc=new DOMParser().parseFromString(html,'text/html');
     doc.querySelectorAll('script,style,noscript,img,picture,figure,figcaption,table,pre,code,iframe,svg,video,audio,h1,h2,h3,h4,h5,h6').forEach(node=>node.remove());
-    const title=plainText(row.title).toLowerCase();
+    const metadata=[row.title,row.original_title,row.authors,row.journal,row.source,row.publisher].map(value=>plainText(value).toLowerCase()).filter(Boolean);
     let candidates=[...doc.body.querySelectorAll('p,li,blockquote')].map(node=>plainText(node.textContent));
     if(!candidates.length)candidates=[plainText(doc.body.textContent)];
-    candidates=candidates.filter(text=>text.length>=18&&text.toLowerCase()!==title&&!/^(출처|자료|저자|게재|발행|doi|www\.|https?\b|이미지|사진)\s*[:：]?/i.test(text)&&!/^[\w.-]+\.(?:jpg|jpeg|png|gif|webp)$/i.test(text));
+    candidates=candidates.filter(text=>{const lower=text.toLowerCase();return text.length>=18&&!metadata.includes(lower)&&!/^(출처|자료|저자|게재|발행|doi|www\.|https?\b|이미지|사진|wiley online library|pubmed)\s*[:：]?/i.test(text)&&!/^[\w.-]+\.(?:jpg|jpeg|png|gif|webp)$/i.test(text)&&!/^\S+(?:\s+\S+){0,5}\s*\(\d{4}\)[.,]/.test(text)});
     if(!candidates.length)return emptySummary;
     let summary=candidates[0];
     for(let index=1;summary.length<120&&index<candidates.length;index+=1)summary+=` ${candidates[index]}`;
