@@ -1,5 +1,5 @@
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://languagebrain.vercel.app').replace(/\/$/, '');
-export const SITE_NAME = '언어와 뇌 | 권우진 연구실';
+export const SITE_NAME = '삶과 언어 | 권우진 연구실';
 export const SITE_DESCRIPTION = '언어와 인지, 문해교육, 읽기와 쓰기, 뇌와 삶의 관계를 탐구하고 논문·뉴스·연구 원고를 소개하는 권우진의 연구 공간입니다.';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhaosgzyvoijgwryybry.supabase.co';

@@ -103,13 +103,13 @@ export default async function handler(request, response) {
       dateModified: post.updated_at || post.published_at || undefined,
       keywords: seoTags.length ? seoTags : undefined,
       author: { '@type': 'Person', name: '권우진', url: `${SITE_URL}/#about` },
-      publisher: { '@type': 'Organization', name: '언어와 뇌 | 권우진 연구실', url: `${SITE_URL}/` },
+      publisher: { '@type': 'Organization', name: '삶과 언어 | 권우진 연구실', url: `${SITE_URL}/` },
       image: image ? [image] : undefined
     };
     const articleTags = seoTags.map(tag => `<meta property="article:tag" content="${escapeHtml(tag)}">`).join('');
-    const head = `<link rel="canonical" href="${escapeHtml(canonical)}"><meta name="robots" content="index, follow, max-image-preview:large"><meta property="og:type" content="article"><meta property="og:locale" content="ko_KR"><meta property="og:site_name" content="언어와 뇌"><meta property="og:title" content="${escapeHtml(post.title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(image)}">${articleTags}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(post.title)}"><meta name="twitter:description" content="${escapeHtml(description)}"><meta name="twitter:image" content="${escapeHtml(image)}"><script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>`;
+    const head = `<link rel="canonical" href="${escapeHtml(canonical)}"><meta name="robots" content="index, follow, max-image-preview:large"><meta property="og:type" content="article"><meta property="og:locale" content="ko_KR"><meta property="og:site_name" content="삶과 언어"><meta property="og:title" content="${escapeHtml(post.title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:image" content="${escapeHtml(image)}">${articleTags}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(post.title)}"><meta name="twitter:description" content="${escapeHtml(description)}"><meta name="twitter:image" content="${escapeHtml(image)}"><script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>`;
     html = html
-      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(post.title)} | 언어와 뇌</title>`)
+      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(post.title)} | 삶과 언어</title>`)
       .replace(/<meta name="description"[^>]*>/i, `<meta name="description" content="${escapeHtml(description)}">`)
       .replace('</head>', `${head}</head>`)
       .replace(/<main id="article">[\s\S]*?<\/main>/i, `<main id="article">${renderArticle(post)}</main>`)

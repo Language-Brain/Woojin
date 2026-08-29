@@ -15,7 +15,7 @@ assert.match(css,/main\.wrap\{width:min\(1120px,calc\(100% - 48px\)\)/,'works co
 assert.match(css,/\.works-list-thumb img\{[^}]*object-fit:cover/,'thumbnails must use object-fit cover');
 assert.match(css,/@media\(max-width:620px\)[\s\S]*grid-template-areas:"primary thumb" "summary thumb" "meta meta"/,'mobile must keep title and summary near a small right thumbnail');
 assert.match(css,/\[data-archive-kind="works"\] \.works-list-item h2\{[^}]*font:700 22px/,'desktop work titles must be prominent without returning to oversized cards');
-assert.match(html,/archive\.css\?v=works-columns-20260829-1/);
-assert.match(html,/archive\.js\?v=works-columns-20260829-1/);
+assert.match(html,/archive\.css\?v=compact-summary-20260829-1/);
+assert.match(html,/archive\.js\?v=compact-summary-20260829-1/);
 
 console.log('works list layout checks passed');
