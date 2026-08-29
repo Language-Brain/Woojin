@@ -13,9 +13,13 @@ assert.match(adminJs,/image_url_2:\s*draft\.image_url_2\s*\?\?\s*publishedSecond
 assert.match(adminJs,/if \(slot === 2\) featuredFile2 = file/);
 assert.match(adminJs,/clear-post-image\$\{suffix\}/);
 assert.match(apiJs,/secondImageFromContent\(post\.content_html\)/);
+assert.match(apiJs,/<article class="wrap article-body protected-content">\$\{gallery\}\$\{body\}/);
 assert.doesNotMatch(apiJs,/working_content[^\n]+image_url_2/);
 assert.match(templateHtml,/hero-gallery\.double\{grid-template-columns:repeat\(2/);
-assert.match(templateHtml,/hero-gallery\.double\{grid-template-columns:1fr\}/);
+assert.match(templateHtml,/\.hero-gallery\{float:right;width:min\(35%,360px\)/);
+assert.match(templateHtml,/\.article-body \.hero-gallery \.hero\{[^}]*max-height:420px!important/);
+assert.match(templateHtml,/@media\(max-width:600px\)\{\.hero-gallery\{float:none;width:100%/);
+assert.match(templateHtml,/\.hero-gallery \.hero\{[^}]*max-height:240px!important/);
 assert.match(adminCss,/preview-image-gallery\.double\{grid-template-columns:repeat\(2/);
 const encoded=encodeURIComponent(JSON.stringify({url:'https://example.com/two.png',alt:'두 번째 이미지'}));
 const cases=['<p>본문</p>',`<!--languagebrain-image-2:${encoded}--><p>본문</p>`];

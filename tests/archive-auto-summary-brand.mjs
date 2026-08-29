@@ -19,8 +19,9 @@ assert.match(js,/if\(kind==='papers'\|\|kind==='news'\) return compactPostCard\(
 assert.match(js,/문해, 한국어 교육, 디지털리터러시, 인지 능력 등과 관련한 뉴스를 살펴봅니다\./);
 assert.match(css,/\.compact-list-row\{[^}]*grid-template-columns:minmax\(0,1fr\) 180px/);
 assert.match(css,/@media\(max-width:620px\)[\s\S]*\.compact-list-thumb\{width:96px;height:72px\}/);
-assert.match(admin,/목록 설명\(선택\)/);
-assert.match(admin,/비워 두면 본문에서 목록 설명을 자동으로 추출합니다/);
+assert.doesNotMatch(admin,/목록 설명\(선택\)/);
+assert.match(admin,/<input id="post-excerpt" type="hidden">/);
+assert.match(js,/if\(!html\)\{[\s\S]*row\.excerpt,row\.subtitle,row\.description/,'saved descriptions are preserved only when the body is empty');
 assert.match(archive,/<a class="brand" href="\/">삶과 언어<\/a>/);
 assert.match(home,/<a class="brand" href="#top">삶과 언어<\/a>/);
 assert.match(home,/<title>삶과 언어 \| 권우진 연구실<\/title>/);

@@ -42,9 +42,11 @@
     return `${sample.slice(0,cut).trim()}…`;
   }
   function listSummary(row){
-    const manual=[row.excerpt,row.subtitle,row.description].map(plainText).find(value=>value&&value!==emptySummary);
-    if(manual)return shorten(manual);
-    const html=String(row.content_html||row.content||'').trim(); if(!html)return emptySummary;
+    const html=String(row.content_html||row.content||'').trim();
+    if(!html){
+      const preserved=[row.excerpt,row.subtitle,row.description].map(plainText).find(value=>value&&value!==emptySummary);
+      return preserved?shorten(preserved):emptySummary;
+    }
     const doc=new DOMParser().parseFromString(html,'text/html');
     doc.querySelectorAll('script,style,noscript,img,picture,figure,figcaption,table,pre,code,iframe,svg,video,audio,h1,h2,h3,h4,h5,h6').forEach(node=>node.remove());
     const metadata=[row.title,row.original_title,row.authors,row.journal,row.source,row.publisher].map(value=>plainText(value).toLowerCase()).filter(Boolean);
