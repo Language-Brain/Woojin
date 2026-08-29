@@ -8,7 +8,7 @@
   const kind=['papers','news','works','videos'].includes(path)?path:['papers','news','works','videos'].includes(requested)?requested:'papers';
   const settings={
     papers:{type:'paper',title:'주목할 논문',eyebrow:'PAPER ARCHIVE',description:'언어·문해·인지와 뇌에 관한 국내외 연구를 한국어로 정리한 자료실입니다.'},
-    news:{type:'news',title:'뇌·인지 뉴스',eyebrow:'NEWS ARCHIVE',description:'문해, 한국어 교육, 디지털리터러시, 인지 능력 등과 관련한 뉴스를 살펴봅니다.'},
+    news:{type:'news',title:'언어, 문해, 인지 관련 기사',eyebrow:'NEWS ARCHIVE',description:'문해, 한국어 교육, 디지털리터러시, 인지 능력 등과 관련한 뉴스를 살펴봅니다.'},
     works:{type:'works',title:'강의·저서·연구 원고',eyebrow:'WORKS ARCHIVE',description:'연구에서 출발해 교육과 삶으로 이어지는 강의, 저서, 연구 원고를 모았습니다.'},
     videos:{type:'video',title:'동영상',eyebrow:'VIDEO ARCHIVE',description:'언어와 뇌, 문해교육의 질문을 짧고 선명하게 살펴보는 영상 자료실입니다.'}
   }[kind];
