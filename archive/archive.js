@@ -27,7 +27,7 @@
   const params=new URLSearchParams(location.search);
   let rows=[],visible=kind==='works'?Math.max(12,Number(savedState.visible)||12):12;
   $('#archive-title').textContent=settings.title; $('#eyebrow').textContent=settings.eyebrow; $('#archive-description').textContent=settings.description;
-  $('#search').placeholder=kind==='papers'?'제목·원문 제목·저자 검색':'제목 또는 설명 검색';
+  $('#search').placeholder='키워드 검색';
   const date=v=>{if(!v)return '날짜 없음';const raw=String(v),parsed=new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw)?`${raw}T00:00:00`:raw);return Number.isNaN(parsed.getTime())?'날짜 없음':parsed.toLocaleDateString('ko-KR')};
   function detailUrl(row){return kind==='videos'?`/video?id=${encodeURIComponent(row.id)}`:`/article?id=${encodeURIComponent(row.id)}`}
   const emptySummary='상세 내용을 준비하고 있습니다.';
@@ -87,32 +87,31 @@
   }
   function saveState(includeScroll=false){
     if(kind!=='works') return;
-    const state={q:$('#search').value,topic:$('#topic').value,sort:$('#sort').value,visible,scrollY:includeScroll?window.scrollY:(savedState.scrollY||0)};
+    const state={q:$('#search').value,visible,scrollY:includeScroll?window.scrollY:(savedState.scrollY||0)};
     sessionStorage.setItem(stateKey,JSON.stringify(state)); savedState=state;
-    const url=new URL(location.href); ['q','topic','sort'].forEach(key=>url.searchParams.delete(key));
-    if(state.q)url.searchParams.set('q',state.q); if(state.topic&&state.topic!=='all')url.searchParams.set('topic',state.topic); if(state.sort==='old')url.searchParams.set('sort','old');
+    const url=new URL(location.href); url.searchParams.delete('q');
+    if(state.q)url.searchParams.set('q',state.q);
     history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
   }
   function render(){
-    const q=$('#search').value.trim().toLowerCase(),topic=$('#topic').value,old=$('#sort').value==='old';
-    let filtered=rows.filter(r=>{const hay=kind==='papers'?`${r.title} ${r.original_title} ${r.authors}`:`${r.title} ${r.description||r.excerpt||''}`;return(!q||hay.toLowerCase().includes(q))&&(topic==='all'||r.category===topic)});
+    const q=$('#search').value.trim().toLocaleLowerCase('ko-KR');
+    let filtered=rows.filter(row=>!q||row._searchText.includes(q));
     filtered.sort((a,b)=>kind==='videos'
-      ? (old?-1:1)*((Number(a.home_order)||0)-(Number(b.home_order)||0))
-      : (old?1:-1)*String(a.published_at||a.article_date||a.created_at).localeCompare(String(b.published_at||b.article_date||b.created_at)));
-    $('#archive-list').innerHTML=filtered.slice(0,visible).map(card).join(''); $('#result-count').textContent=`공개 자료 ${filtered.length}건`; $('#empty').hidden=filtered.length>0; $('#load-more').hidden=filtered.length<=visible; saveState();
+      ? (Number(a.home_order)||0)-(Number(b.home_order)||0)
+      : -String(a.published_at||a.article_date||a.created_at).localeCompare(String(b.published_at||b.article_date||b.created_at)));
+    $('#archive-list').innerHTML=filtered.slice(0,visible).map(card).join(''); $('#result-count').textContent=`공개 자료 ${filtered.length}건`; $('#empty').hidden=filtered.length>0; $('#empty').textContent='검색 결과가 없습니다.'; $('#load-more').hidden=filtered.length<=visible; $('#clear-search').hidden=!$('#search').value; saveState();
   }
   async function load(){
     let result;
     if(kind==='videos') result=await db.from('videos').select('*').eq('status','published').neq('youtube_id','');
     else result=await db.from('posts').select('*').eq('status','published').eq('type',settings.type);
     if(result.error){$('#empty').hidden=false;$('#empty').textContent='자료를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';return}
-    rows=(result.data||[]).map(row=>({...row,_listSummary:listSummary(row)})); const topics=[...new Set(rows.map(r=>r.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-    $('#topic').insertAdjacentHTML('beforeend',topics.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(''));
-    if(kind==='works'){$('#search').value=params.get('q')??savedState.q??''; const topic=params.get('topic')??savedState.topic; if(topic&&topics.includes(topic))$('#topic').value=topic; $('#sort').value=(params.get('sort')??savedState.sort)==='old'?'old':'new'}
+    rows=(result.data||[]).map(row=>({...row,_listSummary:listSummary(row),_searchText:[row.title,row.subtitle,row.excerpt,row.description,row.content_html,row.content,row.tags,row.authors,row.original_title,row.category,row.source,row.publisher].flat().map(plainText).join(' ').toLocaleLowerCase('ko-KR')}));
+    if(kind==='works')$('#search').value=params.get('q')??savedState.q??'';
     render();
     if(kind==='works'&&savedState.scrollY)requestAnimationFrame(()=>window.scrollTo({top:Number(savedState.scrollY)||0,behavior:'auto'}));
   }
-  ['#search','#topic','#sort'].forEach(s=>$(s).addEventListener('input',()=>{visible=12;render()})); $('#load-more').addEventListener('click',()=>{visible+=12;render()});
+  $('#search').addEventListener('input',()=>{visible=12;render()}); $('#clear-search').addEventListener('click',()=>{$('#search').value='';visible=12;render();$('#search').focus()}); $('#load-more').addEventListener('click',()=>{visible+=12;render()});
   if(kind==='works'){document.addEventListener('click',event=>{if(event.target.closest('.works-list-row'))saveState(true)});window.addEventListener('pagehide',()=>saveState(true))}
   load();
 })();

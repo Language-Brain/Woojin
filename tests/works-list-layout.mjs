@@ -8,14 +8,21 @@ const html=readFileSync(new URL('../archive/index.html',import.meta.url),'utf8')
 assert.match(js,/if\(kind==='works'\) return workCard\(row\)/,'works must use its own list renderer');
 assert.match(js,/class="works-list-row"/,'the whole work row must be a link');
 assert.match(js,/works-list-placeholder/,'missing images must keep a stable thumbnail slot');
-assert.match(js,/sessionStorage\.setItem\(stateKey/,'works filters and scroll state must be preserved');
+assert.match(js,/sessionStorage\.setItem\(stateKey/,'works search and scroll state must be preserved');
 assert.match(css,/grid-template-columns:minmax\(0,35fr\) minmax\(0,40fr\) 200px/,'desktop must use title, summary, and thumbnail columns');
 assert.match(css,/grid-template-areas:"primary summary thumb" "meta summary thumb"/,'desktop summary must sit to the right of the title');
 assert.match(css,/main\.wrap\{width:min\(1120px,calc\(100% - 48px\)\)/,'works controls and list must share a centered maximum width');
 assert.match(css,/\.works-list-thumb img\{[^}]*object-fit:cover/,'thumbnails must use object-fit cover');
 assert.match(css,/@media\(max-width:620px\)[\s\S]*grid-template-areas:"primary thumb" "summary thumb" "meta meta"/,'mobile must keep title and summary near a small right thumbnail');
 assert.match(css,/\[data-archive-kind="works"\] \.works-list-item h2\{[^}]*font:700 22px/,'desktop work titles must be prominent without returning to oversized cards');
-assert.match(html,/archive\.css\?v=compact-summary-20260829-1/);
-assert.match(html,/archive\.js\?v=compact-summary-20260829-1/);
+assert.match(html,/archive\.css\?v=compact-search-20260829-1/);
+assert.match(html,/archive\.js\?v=compact-search-20260829-1/);
+assert.doesNotMatch(html,/<span>주제<\/span>|<span>정렬<\/span>|id="topic"|id="sort"/);
+assert.match(html,/placeholder="키워드 검색"/);
+assert.match(html,/id="clear-search"[^>]*hidden/);
+assert.match(js,/row\.content_html,row\.content,row\.tags,row\.authors/,'keyword search must include body, tags, and authors');
+assert.match(js,/검색 결과가 없습니다\./);
+assert.match(css,/\.filters \.search\{[^}]*width:min\(100%,300px\)/);
+assert.match(css,/@media\(max-width:620px\)[\s\S]*\.filters \.search input\{height:40px;min-height:40px;font-size:16px\}/);
 
 console.log('works list layout checks passed');
