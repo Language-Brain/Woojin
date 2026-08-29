@@ -3,12 +3,22 @@ import { SITE_URL, publicArticleUrl, supabaseRows, xmlEscape } from './_seo.js';
 export default async function handler(request, response) {
   try {
     const [posts, videos, guides, pyeongjae] = await Promise.all([
-      supabaseRows('posts', 'select=id,updated_at,published_at&status=eq.published&type=in.(paper,news,works)&order=updated_at.desc'),
+      supabaseRows('posts', 'select=id,type,updated_at,published_at&status=eq.published&type=in.(paper,news,works)&order=updated_at.desc'),
       supabaseRows('videos', 'select=id,updated_at,published_at&status=eq.published&order=updated_at.desc'),
       supabaseRows('guides', 'select=id,updated_at&status=eq.active&visibility=eq.public&order=updated_at.desc'),
       supabaseRows('pyeongjae_entries', 'select=id,updated_at&status=eq.published&order=updated_at.desc')
     ]);
-    const fixed = ['/', '/papers', '/news', '/works', '/videos', '/search', '/guides', '/pyeongjae'].map(path => ({ loc: `${SITE_URL}${path}` }));
+    const latest = rows => rows.map(row => row.updated_at || row.published_at).filter(Boolean).sort().at(-1);
+    const fixed = [
+      { path: '/', lastmod: latest([...posts, ...videos, ...guides, ...pyeongjae]) },
+      { path: '/papers', lastmod: latest(posts.filter(post => post.type === 'paper')) },
+      { path: '/news', lastmod: latest(posts.filter(post => post.type === 'news')) },
+      { path: '/works', lastmod: latest(posts.filter(post => post.type === 'works')) },
+      { path: '/videos', lastmod: latest(videos) },
+      { path: '/search', lastmod: latest(posts) },
+      { path: '/guides', lastmod: latest(guides) },
+      { path: '/pyeongjae', lastmod: latest(pyeongjae) }
+    ].map(entry => ({ loc: `${SITE_URL}${entry.path}`, lastmod: entry.lastmod }));
     const entries = [
       ...fixed,
       ...posts.map(post => ({ loc: publicArticleUrl(post.id), lastmod: post.updated_at || post.published_at })),
