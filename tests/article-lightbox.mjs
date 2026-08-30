@@ -5,9 +5,9 @@ const api = fs.readFileSync(new URL('../api/article.js', import.meta.url), 'utf8
 const script = fs.readFileSync(new URL('../customer/article-lightbox.js', import.meta.url), 'utf8');
 const style = fs.readFileSync(new URL('../customer/article-lightbox.css', import.meta.url), 'utf8');
 
-assert.match(api, /article-lightbox\.css/);
+assert.match(api, /\/customer\/article-lightbox\.css/);
 assert.match(api, /id="image-lightbox"/);
-assert.match(api, /article-lightbox\.js/);
+assert.match(api, /\/customer\/article-lightbox\.js/);
 
 assert.match(script, /\.article-body img/);
 assert.match(script, /naturalWidth < 120 && image\.naturalHeight < 120/);
