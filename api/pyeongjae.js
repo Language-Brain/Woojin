@@ -3,6 +3,10 @@ const clean=v=>String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim();
 const safeUrl=v=>{try{const u=new URL(String(v||''));return /^https?:$/.test(u.protocol)?u.href:''}catch{return''}};
 const section=(title,text,cls='')=>text?`<section class="text-part ${cls}"><h3>${escapeHtml(title)}</h3><div>${escapeHtml(text)}</div></section>`:'';
 const faceLabel=side=>side==='back'?'뒷면':'앞면';
+const priorityRank=row=>String(row?.title||'').trimStart().startsWith('○')?0:String(row?.title||'').trimStart().startsWith('#')?1:2;
+const isPriority=row=>priorityRank(row)<2;
+const createdTime=row=>Date.parse(row?.created_at||row?.published_at||row?.updated_at||'')||0;
+const compareEntries=(a,b)=>priorityRank(a)-priorityRank(b)||(isPriority(a)&&isPriority(b)?createdTime(a)-createdTime(b):0)||(Number(a.book_no)-Number(b.book_no))||(Number(a.sheet_no)-Number(b.sheet_no))||((a.side==='back'?1:0)-(b.side==='back'?1:0));
 function pageMarkup(page,row){return `<section class="page-block"><p class="page-label">제${row.book_no}책 · 제${row.sheet_no}장 · ${faceLabel(row.side)} · ${escapeHtml(row.genre)}</p>${page.marker?`<p class="review-note">${escapeHtml(page.marker)}</p>`:''}${section('원문과 음독',page.original_reading,'original')}${section('현대어 직역',page.literal_translation)}${section('현대어 의역',page.interpretive_translation)}${section('참고',page.notes)}</section>`}
 export default async function handler(request,response){
  const id=String(Array.isArray(request.query?.id)?request.query.id[0]:request.query?.id||'');response.setHeader('Content-Type','text/html; charset=utf-8');
@@ -10,7 +14,7 @@ export default async function handler(request,response){
  try{
   const [row]=await supabaseRows('pyeongjae_entries',`select=*&id=eq.${encodeURIComponent(id)}&status=eq.published&limit=1`);
   if(!row){response.setHeader('X-Robots-Tag','noindex,nofollow');return response.status(404).send('<!doctype html><meta charset="utf-8"><title>자료 없음</title><p>공개되지 않았거나 존재하지 않는 자료입니다.</p>')}
-  const all=(await supabaseRows('pyeongjae_entries','select=id,book_no,sheet_no,side,status&status=eq.published&order=book_no.asc,sheet_no.asc')).sort((a,b)=>(a.book_no-b.book_no)||(a.sheet_no-b.sheet_no)||((a.side==='back'?2:1)-(b.side==='back'?2:1)));
+  const all=(await supabaseRows('pyeongjae_entries','select=id,book_no,sheet_no,side,status,title,created_at,published_at,updated_at&status=eq.published')).sort(compareEntries);
   const pos=all.findIndex(x=>x.id===row.id),prev=all[pos-1],next=all[pos+1],canonical=`${SITE_URL}/pyeongjae-entry?id=${encodeURIComponent(row.id)}`,displayTitle=row.title;
   const description=clean(row.summary||`${row.title} — 원문·음독·직역·의역·참고.`).slice(0,170),tags=[...(row.people||[]),...(row.places||[]),...(row.tags||[])],keywords=['평재문집',`제${row.book_no}책`,`제${row.sheet_no}장`,faceLabel(row.side),row.genre,...(row.volume_no?[`권${row.volume_no}`]:[]),...tags];
   const allPages=Array.isArray(row.pages)?row.pages:[],matched=allPages.filter(p=>p.side===row.side),pages=matched.length?matched:allPages.slice(0,1);

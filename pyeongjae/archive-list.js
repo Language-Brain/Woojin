@@ -15,7 +15,12 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
   const plainPage = value => [value?.original_reading, value?.literal_translation, value?.interpretive_translation, value?.notes].join(' ');
   const faceOrder = value => value === 'back' ? 1 : 0;
-  const compare = (a, b) => Number(a.book_no) - Number(b.book_no)
+  const priorityRank = row => String(row?.title || '').trimStart().startsWith('○') ? 0 : String(row?.title || '').trimStart().startsWith('#') ? 1 : 2;
+  const isPriority = row => priorityRank(row) < 2;
+  const createdTime = row => Date.parse(row?.created_at || row?.published_at || row?.updated_at || '') || 0;
+  const compare = (a, b) => priorityRank(a) - priorityRank(b)
+    || (isPriority(a) && isPriority(b) ? createdTime(a) - createdTime(b) : 0)
+    || Number(a.book_no) - Number(b.book_no)
     || Number(a.sheet_no ?? a.start_page) - Number(b.sheet_no ?? b.start_page)
     || faceOrder(a.side) - faceOrder(b.side);
 
@@ -52,14 +57,14 @@
     updateUrl();
     const needle = query.value.trim().toLocaleLowerCase('ko-KR');
     const ordered = [...rows].sort(compare);
-    const ordinals = new Map(ordered.map((row, index) => [row.id, index + 1]));
+    const ordinals = new Map(ordered.filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
     const found = ordered.filter(row => (!book || String(row.book_no) === book)
       && (!genre || row.genre === genre)
       && (!needle || [row.title, row.genre, row.volume_no, row.sheet_no, ...(Array.isArray(row.tags) ? row.tags : []), ...(Array.isArray(row.pages) ? row.pages.map(plainPage) : [])].join(' ').toLocaleLowerCase('ko-KR').includes(needle)));
     pagination(found.length);
     const shown = found.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     document.querySelector('#count').textContent = `검색 결과 ${found.length}건`;
-    list.innerHTML = shown.length ? shown.map(row => `<a class="entry-row face-row" href="/pyeongjae-entry?id=${encodeURIComponent(row.id)}"><span class="face-number" aria-label="전체 평재문집 순차 번호 ${ordinals.get(row.id)}">${ordinals.get(row.id)}</span><strong class="face-title">${esc(row.title)}</strong><span class="face-meta">${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${esc(row.genre || '종류 미확인')} · 조회 ${Number(row.view_count || 0).toLocaleString()}</span></a>`).join('') : '<p class="empty">조건에 맞는 공개 자료가 없습니다.</p>';
+    list.innerHTML = shown.length ? shown.map(row => { const number = ordinals.get(row.id); return `<a class="entry-row face-row${number ? '' : ' priority-row'}" href="/pyeongjae-entry?id=${encodeURIComponent(row.id)}">${number ? `<span class="face-number" aria-label="전체 평재문집 순차 번호 ${number}">${number}</span>` : ''}<strong class="face-title">${esc(row.title)}</strong><span class="face-meta">${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${esc(row.genre || '종류 미확인')} · 조회 ${Number(row.view_count || 0).toLocaleString()}</span></a>` }).join('') : '<p class="empty">조건에 맞는 공개 자료가 없습니다.</p>';
   }
 
   function resetRender() { page = 1; render(); }

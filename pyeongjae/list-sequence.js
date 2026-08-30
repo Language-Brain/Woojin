@@ -3,7 +3,12 @@
   if (!config?.supabaseUrl || !config?.supabasePublishableKey || !window.supabase) return;
   const client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
   const faceOrder = value => value === 'back' ? 1 : 0;
-  const compare = (a, b) => Number(a.book_no) - Number(b.book_no)
+  const priorityRank = row => String(row?.title || '').trimStart().startsWith('○') ? 0 : String(row?.title || '').trimStart().startsWith('#') ? 1 : 2;
+  const isPriority = row => priorityRank(row) < 2;
+  const createdTime = row => Date.parse(row?.created_at || row?.published_at || row?.updated_at || '') || 0;
+  const compare = (a, b) => priorityRank(a) - priorityRank(b)
+    || (isPriority(a) && isPriority(b) ? createdTime(a) - createdTime(b) : 0)
+    || Number(a.book_no) - Number(b.book_no)
     || Number(a.sheet_no ?? a.start_page) - Number(b.sheet_no ?? b.start_page)
     || faceOrder(a.side) - faceOrder(b.side);
   let ordinals = new Map();
@@ -37,9 +42,9 @@
     decorating = false;
   };
   new MutationObserver(decorate).observe(document.body, { childList: true, subtree: true });
-  client.from('pyeongjae_entries').select('id,book_no,sheet_no,start_page,side')
+  client.from('pyeongjae_entries').select('id,book_no,sheet_no,start_page,side,title,created_at,published_at,updated_at')
     .eq('status', 'published').then(({ data }) => {
-      ordinals = new Map((data || []).sort(compare).map((row, index) => [row.id, index + 1]));
+      ordinals = new Map((data || []).sort(compare).filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
       decorate();
     });
 })();
