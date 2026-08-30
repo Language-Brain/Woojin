@@ -31,9 +31,9 @@
   align-items: center;
   justify-content: center;
   padding: clamp(48px, 6vw, 72px) clamp(16px, 4vw, 48px);
-  overflow: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
-  touch-action: pinch-zoom;
+  touch-action: none;
 }
 
 .image-lightbox-image {
@@ -47,8 +47,19 @@
   padding: 0;
   border: 0;
   background: transparent;
-  touch-action: pinch-zoom;
+  transform-origin: center center;
+  will-change: transform;
+  touch-action: none;
+  cursor: default;
   -webkit-user-drag: none;
+}
+
+.image-lightbox-image.is-pannable {
+  cursor: grab;
+}
+
+.image-lightbox-image.is-dragging {
+  cursor: grabbing;
 }
 
 .image-lightbox-close {

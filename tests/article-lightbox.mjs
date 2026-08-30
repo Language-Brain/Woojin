@@ -17,10 +17,22 @@ assert.match(script, /event\.target === inner/);
 assert.match(script, /dialog\.addEventListener\('cancel'/);
 assert.match(script, /opener\?\.focus\(\{ preventScroll: true \}\)/);
 assert.match(script, /event\.key === 'Enter' \|\| event\.key === ' '/);
+assert.match(script, /viewer\.addEventListener\('pointerdown'/);
+assert.match(script, /viewer\.addEventListener\('pointermove'/);
+assert.match(script, /viewer\.setPointerCapture/);
+assert.match(script, /pinch\.localX \* nextScale/);
+assert.match(script, /viewer\.offsetWidth \* scale - inner\.clientWidth/);
+assert.match(script, /state\.scale > MIN_SCALE && drag/);
+assert.match(script, /document\.body\.style\.position = 'fixed'/);
+assert.match(script, /window\.scrollTo\(0, savedScrollY\)/);
+assert.match(script, /resetView\(\);\s*viewer\.removeAttribute\('src'\)/);
+assert.match(script, /backdropGesture\.moved/);
 
 assert.match(style, /cursor:\s*zoom-in/);
-assert.match(style, /touch-action:\s*pinch-zoom/);
+assert.match(style, /touch-action:\s*none/);
 assert.match(style, /object-fit:\s*contain/);
+assert.match(style, /transform-origin:\s*center center/);
+assert.match(style, /\.image-lightbox-image\.is-pannable/);
 assert.match(style, /\.image-lightbox::backdrop/);
 assert.doesNotMatch(style, /\.article-body img\s*\{/);
 
