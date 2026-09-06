@@ -1438,7 +1438,7 @@
   });
 
 
-  const guideEditor=$('#guide-body-editor'),guideAllowedTags=['p','br','div','strong','b','u','span','a','ol','ul','li'];let guideSelection=null;
+  const guideEditor=$('#guide-body-editor'),guideAllowedTags=['p','br','div','strong','b','u','span','a','ol','ul','li'];let guideSelection=null;$('#guide-text-color').addEventListener('pointerdown',()=>document.execCommand('styleWithCSS',false,true));$('#guide-text-color').addEventListener('change',()=>document.execCommand('styleWithCSS',false,false));
   function guideSafeUrl(value){try{const url=new URL(String(value||'').trim(),location.origin);return ['http:','https:'].includes(url.protocol)?url:''}catch{return''}}
   function guidePlainToHtml(value){return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split(/\n{2,}/).map(block=>`<p>${block.replace(/\n/g,'<br>')}</p>`).join('')}
   function normalizeGuideBody(root){root.querySelectorAll('[style]').forEach(node=>{const color=node.style.color;node.removeAttribute('style');if(color&&CSS.supports('color',color))node.style.color=color});root.querySelectorAll('a').forEach(link=>{const safe=guideSafeUrl(link.getAttribute('href'));if(!safe){link.replaceWith(...link.childNodes);return}link.href=safe.href;if(link.target==='_blank')link.rel='noopener noreferrer';else{link.removeAttribute('target');link.removeAttribute('rel')}})}
