@@ -120,7 +120,7 @@
   }
 
   function showError(error) {
-    console.error('자료 안내 화면 초기화 실패', error);
+    console.error('보조 자료실 화면 초기화 실패', error);
     count.textContent = '';
     list.innerHTML = '<div class="route-error" role="alert"><strong>자료를 불러오지 못했습니다.</strong><p>인터넷 연결을 확인한 뒤 다시 시도해 주세요.</p><div><button id="retry-guides" type="button">다시 시도</button><a href="/">홈으로</a></div></div>';
     document.querySelector('#retry-guides')?.addEventListener('click', search, { once: true });

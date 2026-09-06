@@ -12,7 +12,7 @@ const vercel=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url
 assert.match(guideCss,/\.site-header\{height:66px/);
 assert.doesNotMatch(guideCss,/(^|})header\{height:66px/);
 assert.match(guide,/\.document-head\{display:block;width:100%;height:auto/);
-const headerMarkup='document-kicker\\">자료 안내</p><h1></h1><p class=\\"meta\\"></p><div class=\\"tags\\"></div><p class=\\"summary';
+const headerMarkup='document-kicker\\">보조 자료실</p><h1></h1><p class=\\"meta\\"></p><div class=\\"tags\\"></div><p class=\\"summary';
 assert.ok(guide.includes(headerMarkup.replaceAll('\\\\"','"')) || /document-kicker.*?<h1><\/h1><p class="meta"><\/p><div class="tags"><\/div><p class="summary/s.test(guide));
 assert.match(guide,/word-break:keep-all;overflow-wrap:break-word/);
 assert.match(admin,/const normalizeTags = value/);
@@ -26,7 +26,7 @@ assert.match(template,/href=\\"\/search\?q=\$\{encodeURIComponent\(tag\)\}\\"/);
 for(const field of ['title','excerpt','content_html','tags'])assert.ok(search.includes(field));
 assert.match(search,/\.eq\('status','published'\)/);
 assert.match(search,/\.in\('type',\['paper','news','works'\]\)/);
-assert.match(search,/자료 안내 문서에서도 찾기/);
+assert.match(search,/보조 자료에서도 찾기/);
 assert.match(customer,/href="\/search">글 검색/);
 assert.ok(vercel.rewrites.some(row=>row.source==='/search'));
 assert.match(sitemap,/'\/search'/);
