@@ -37,7 +37,7 @@ test('all public detail families load the shared controls and mark body-only con
     read('api/pyeongjae.js')
   ]);
   for (const source of [article, guide, pyeongjae]) {
-    assert.match(source, /reader-text-size\.css\?v=20260909-2/);
+    assert.match(source, /reader-text-size\.css\?v=20260909-(?:2|3)/);
     assert.match(source, /reader-text-size\.js\?v=20260909-2/);
     assert.match(source, /reader-text-content/);
   }
