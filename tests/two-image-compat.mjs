@@ -13,7 +13,7 @@ assert.match(adminJs,/image_url_2:\s*draft\.image_url_2\s*\?\?\s*publishedSecond
 assert.match(adminJs,/if \(slot === 2\) featuredFile2 = file/);
 assert.match(adminJs,/clear-post-image\$\{suffix\}/);
 assert.match(apiJs,/secondImageFromContent\(post\.content_html\)/);
-assert.match(apiJs,/<article class="wrap article-body protected-content">\$\{gallery\}\$\{body\}/);
+assert.match(apiJs,/<article class="wrap article-body protected-content"><div class="reader-text-content"[^>]*>\$\{gallery\}\$\{body\}<\/div>/);
 assert.doesNotMatch(apiJs,/working_content[^\n]+image_url_2/);
 assert.match(templateHtml,/hero-gallery\.double\{grid-template-columns:repeat\(2/);
 assert.match(templateHtml,/\.hero-gallery\{float:right;width:min\(35%,360px\)/);

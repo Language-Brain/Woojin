@@ -61,7 +61,7 @@ function renderArticle(post) {
   const gallery = images.length ? `<div class="hero-gallery ${images.length === 2 ? 'double' : 'single'}">${images.map(image => `<img class="hero" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" draggable="false">`).join('')}</div>` : '';
   const copyright = '<p class="copyright-notice">© 언어와 뇌. 무단 복제 및 재배포를 금합니다.</p>';
   const recommendations = renderRecommendations(post.recommendedPosts);
-  return `<header class="article-head protected-content"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div></div></header><article class="wrap article-body protected-content">${gallery}${body}${tags}${copyright}${recommendations}${shareMarkup()}</article>`;
+  return `<header class="article-head protected-content"><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category ? ` · ${escapeHtml(post.category)}` : ''}</p><h1>${escapeHtml(post.title)}</h1>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div></div></header><article class="wrap article-body protected-content"><div class="reader-text-content" style="--reader-body-size:18px;--reader-h1-size:36px;--reader-h2-size:30px;--reader-h3-size:24px">${gallery}${body}</div>${tags}${copyright}${recommendations}${shareMarkup()}</article>`;
 }
 
 export default async function handler(request, response) {
@@ -111,9 +111,9 @@ export default async function handler(request, response) {
     html = html
       .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(post.title)} | 삶과 언어</title>`)
       .replace(/<meta name="description"[^>]*>/i, `<meta name="description" content="${escapeHtml(description)}">`)
-      .replace('</head>', `${head}<link rel="stylesheet" href="/customer/article-lightbox.css?v=20260831-3"></head>`)
+      .replace('</head>', `${head}<link rel="stylesheet" href="/customer/article-lightbox.css?v=20260831-3"><link rel="stylesheet" href="/customer/reader-text-size.css?v=20260909-1"></head>`)
       .replace(/<main id="article">[\s\S]*?<\/main>/i, `<main id="article">${renderArticle(post)}</main>`)
-      .replace('</body>', '<dialog id="image-lightbox" class="image-lightbox" aria-label="확대 이미지"><div class="image-lightbox-inner"><button class="image-lightbox-close" type="button" aria-label="확대 이미지 닫기">×</button><img class="image-lightbox-image" alt=""></div></dialog><script src="/customer/article-lightbox.js?v=20260831-3"></script></body>')
+      .replace('</body>', '<dialog id="image-lightbox" class="image-lightbox" aria-label="확대 이미지"><div class="image-lightbox-inner"><button class="image-lightbox-close" type="button" aria-label="확대 이미지 닫기">×</button><img class="image-lightbox-image" alt=""></div></dialog><script src="/customer/article-lightbox.js?v=20260831-3"></script><script src="/customer/reader-text-size.js?v=20260909-1"></script></body>')
       .replaceAll('href="/customer"', 'href="/"');
     response.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600');
     return response.status(200).send(html);
