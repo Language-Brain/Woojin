@@ -29,13 +29,13 @@
   const client = config?.supabaseUrl && config?.supabasePublishableKey && window.supabase
     ? window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey) : null;
   const faceOrder = value => value === 'back' ? 1 : 0;
-  const priorityRank = row => String(row?.title || '').trimStart().startsWith('○') ? 0 : String(row?.title || '').trimStart().startsWith('#') ? 1 : 2;
-  const isPriority = row => priorityRank(row) < 2;
+  const priorityRank = row => { const title=String(row?.title||'').trimStart(); if(row?.entry_kind==='guide'||title.startsWith('○')||title.startsWith('#'))return title.startsWith('○')?0:title.startsWith('#')?1:2; return 3; };
+  const isPriority = row => priorityRank(row) < 3;
   const createdTime = row => Date.parse(row?.created_at || row?.published_at || row?.updated_at || '') || 0;
   const compare = (a, b) => priorityRank(a) - priorityRank(b)
     || (isPriority(a) && isPriority(b) ? createdTime(a) - createdTime(b) : 0)
-    || Number(a.book_no) - Number(b.book_no)
-    || Number(a.sheet_no ?? a.start_page) - Number(b.sheet_no ?? b.start_page)
+    || Number(a.book_no || 0) - Number(b.book_no || 0)
+    || Number(a.sheet_no ?? a.start_page ?? 0) - Number(b.sheet_no ?? b.start_page ?? 0)
     || faceOrder(a.side) - faceOrder(b.side);
   let ordinals = new Map();
   let currentPage = 1;
@@ -102,7 +102,7 @@
     });
   });
   new MutationObserver(decorate).observe(table, { childList: true });
-  if (client) client.from('pyeongjae_entries').select('id,book_no,sheet_no,start_page,side,title,created_at,published_at,updated_at')
+  if (client) client.from('pyeongjae_entries').select('id,entry_kind,book_no,sheet_no,start_page,side,title,created_at,published_at,updated_at')
     .eq('status', 'published').then(({ data }) => {
       ordinals = new Map((data || []).sort(compare).filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
       decorate();

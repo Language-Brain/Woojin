@@ -13,13 +13,14 @@
   const safe = value => String(value || '').replace(/[,%()]/g, ' ').trim().slice(0, 100);
   const date = value => value ? new Date(value).toLocaleDateString('ko-KR') : '-';
   const faceOrder = value => value === 'back' ? 1 : 0;
-  const priorityRank = row => String(row?.title || '').trimStart().startsWith('○') ? 0 : String(row?.title || '').trimStart().startsWith('#') ? 1 : 2;
-  const isPriority = row => priorityRank(row) < 2;
+  const isGuide = row => row?.entry_kind === 'guide';
+  const priorityRank = row => { const title = String(row?.title || '').trimStart(); if (isGuide(row) || title.startsWith('○') || title.startsWith('#')) return title.startsWith('○') ? 0 : title.startsWith('#') ? 1 : 2; return 3; };
+  const isPriority = row => priorityRank(row) < 3;
   const createdTime = row => Date.parse(row?.created_at || row?.published_at || row?.updated_at || '') || 0;
   const compare = (a, b) => priorityRank(a) - priorityRank(b)
     || (isPriority(a) && isPriority(b) ? createdTime(a) - createdTime(b) : 0)
-    || Number(a.book_no) - Number(b.book_no)
-    || Number(a.sheet_no ?? a.start_page) - Number(b.sheet_no ?? b.start_page)
+    || Number(a.book_no || 0) - Number(b.book_no || 0)
+    || Number(a.sheet_no ?? a.start_page ?? 0) - Number(b.sheet_no ?? b.start_page ?? 0)
     || faceOrder(a.side) - faceOrder(b.side);
   const needle = () => safe(input.value).toLocaleLowerCase('ko-KR');
   const match = haystack => !needle() || String(haystack || '').toLocaleLowerCase('ko-KR').includes(needle());
@@ -72,7 +73,7 @@
     title.textContent = row.title;
     const meta = document.createElement('span');
     meta.className = 'face-meta';
-    meta.textContent = `${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${row.genre || '종류 미확인'} · 조회 ${Number(row.view_count || 0).toLocaleString()}`;
+    meta.textContent = isGuide(row) ? `안내 글 · 조회 ${Number(row.view_count || 0).toLocaleString()}` : `${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${row.genre || '종류 미확인'} · 조회 ${Number(row.view_count || 0).toLocaleString()}`;
     if (number) {
       const sequence = document.createElement('span');
       sequence.className = 'face-number';
@@ -105,10 +106,10 @@
   }
 
   async function pyeongjae() {
-    const rows = await rest('pyeongjae_entries', 'select=id,book_no,sheet_no,start_page,side,title,work_title,summary,people,places,tags,pages,volume_no,genre,view_count,created_at,published_at,updated_at&status=eq.published&limit=1000');
+    const rows = await rest('pyeongjae_entries', 'select=id,entry_kind,guide_body,book_no,sheet_no,start_page,side,title,work_title,summary,people,places,tags,pages,volume_no,genre,view_count,created_at,published_at,updated_at&status=eq.published&limit=1000');
     const sorted = rows.sort(compare);
     const ordinals = new Map(sorted.filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
-    return sorted.filter(row => match([row.title, row.work_title, row.summary, ...(Array.isArray(row.people) ? row.people : []), ...(Array.isArray(row.places) ? row.places : []), ...(Array.isArray(row.tags) ? row.tags : []), JSON.stringify(row.pages || [])].join(' ')))
+    return sorted.filter(row => match([row.title, row.guide_body, row.work_title, row.summary, ...(Array.isArray(row.people) ? row.people : []), ...(Array.isArray(row.places) ? row.places : []), ...(Array.isArray(row.tags) ? row.tags : []), JSON.stringify(row.pages || [])].join(' ')))
       .map(row => pyeongjaeItem(row, ordinals.get(row.id)));
   }
 
