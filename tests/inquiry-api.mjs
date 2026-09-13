@@ -7,7 +7,7 @@ process.env.INQUIRY_HASH_SALT = 'test-hash-salt';
 
 const { default: handler } = await import(`../api/inquiries.js?test=${Date.now()}`);
 const now = Date.now();
-const validBody = { kind: 'lecture', name: '홍길동', email: 'reader@example.com', phone: '', subject: '강의 문의', message: '성인 문해교육 강의를 문의드립니다.', website: '', startedAt: now - 5000 };
+const validBody = { kind: 'lecture', name: '홍길동', email: 'reader@example.com', phone: '', subject: '강의 문의', message: '성인 문해교육 강의를 문의드립니다.', website: '', startedAt: now - 5000, pageUrl: 'https://languagebrain.vercel.app/' };
 
 function responseMock() {
   return { headers: {}, code: 0, body: null, setHeader(key, value) { this.headers[key] = value; }, status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
@@ -32,10 +32,21 @@ globalThis.fetch = async (url, options = {}) => {
 };
 
 let response = responseMock();
+await handler({ method: 'GET', query: { health: '1' }, headers: {} }, response);
+assert.equal(response.code, 200);
+assert.equal(response.body.provider, 'resend');
+assert.equal(response.body.configured.database, true);
+assert.equal(response.body.configured.mail, true);
+
+response = responseMock();
 await handler({ method: 'POST', body: validBody, headers: { 'x-forwarded-for': '203.0.113.7' } }, response);
 assert.equal(response.code, 201);
+assert.equal(response.body.emailStatus, 'sent');
 assert.equal(calls.filter(call => call.url.includes('api.resend.com')).length, 1);
-assert.match(calls.find(call => call.url.includes('api.resend.com')).options.body, /"reply_to":"reader@example.com"/);
+const sentEmail = calls.find(call => call.url.includes('api.resend.com')).options.body;
+assert.match(sentEmail, /"reply_to":"reader@example.com"/);
+assert.match(sentEmail, /\[삶과 언어\] 새 질문 또는 강의 의뢰가 도착했습니다/);
+assert.match(sentEmail, /접수 페이지/);
 assert.match(calls.find(call => call.options.method === 'PATCH').options.body, /"email_status":"sent"/);
 
 mode = 'duplicate'; calls = []; response = responseMock();
@@ -45,7 +56,9 @@ assert.equal(calls.some(call => call.url.includes('api.resend.com')), false, '�
 
 mode = 'email-failure'; calls = []; response = responseMock();
 await handler({ method: 'POST', body: validBody, headers: { 'x-forwarded-for': '203.0.113.8' } }, response);
-assert.equal(response.code, 201, '메일 장애에도 문의 접수');
+assert.equal(response.code, 502, '메일 장애는 방문자에게 실패로 알림');
+assert.equal(response.body.ok, false);
+assert.equal(response.body.saved, true, '메일 장애여도 저장된 문의는 보존');
 assert.equal(calls.filter(call => call.url.includes('api.resend.com')).length, 2, '제한 재시도');
 assert.match(calls.findLast(call => call.options.method === 'PATCH').options.body, /"email_status":"failed"/);
 

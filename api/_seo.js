@@ -1,6 +1,6 @@
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://languagebrain.vercel.app').replace(/\/$/, '');
 export const SITE_NAME = '삶과 언어 | 권우진 연구실';
-export const SITE_DESCRIPTION = '삶과 언어는 문해, 인지, 한국어 교육(KSL, KFL)을 중심으로 논문, 관련 기사와 연구 원고를 소개하는 권우진의 연구 공간입니다.';
+export const SITE_DESCRIPTION = '언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 논문·뉴스·연구 원고와 교육 자료를 소개하는 권우진의 연구 공간입니다.';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhaosgzyvoijgwryybry.supabase.co';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_Obv4RYPtgwB71vZ4vOM0iA_jxPfeuZa';

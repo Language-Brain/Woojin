@@ -3,8 +3,8 @@ import { dedupeKey, escapeHtml, hash, requestIp, safeHeader, validateAndClassify
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhaosgzyvoijgwryybry.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 const RESEND_KEY = process.env.RESEND_API_KEY || '';
-const TO_EMAIL = process.env.INQUIRY_TO_EMAIL || '';
-const FROM_EMAIL = process.env.INQUIRY_FROM_EMAIL || '언어와 뇌 홈페이지 <onboarding@resend.dev>';
+const TO_EMAIL = process.env.INQUIRY_TO_EMAIL || 'ccuccuci@gmail.com';
+const FROM_EMAIL = process.env.INQUIRY_FROM_EMAIL || '삶과 언어 홈페이지 <onboarding@resend.dev>';
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://languagebrain.vercel.app').replace(/\/$/, '');
 
 function json(response, status, body) {
@@ -39,18 +39,31 @@ async function checkRateLimit(ipHash) {
   return (rows || []).length < 5;
 }
 
-function emailContent(row) {
+function sourcePage(request) {
+  const fallback = `${SITE_URL}/`;
+  const raw = request.body?.pageUrl || request.headers?.referer || fallback;
+  try {
+    const url = new URL(String(raw), fallback);
+    return url.origin === new URL(SITE_URL).origin ? url.href : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function emailContent(row, request) {
   const kind = row.kind === 'lecture' ? '강의 문의' : '질문 제안';
-  const subject = `[언어와 뇌] ${kind} · ${safeHeader(row.subject || row.question.slice(0, 40))}`;
+  const subject = '[삶과 언어] 새 질문 또는 강의 의뢰가 도착했습니다';
   const adminUrl = `${SITE_URL}/admin`;
-  const text = `${kind}\n\n이름: ${row.name}\n이메일: ${row.email || '-'}\n연락처: ${row.phone || '-'}\n제목: ${row.subject || '-'}\n\n${row.question}\n\n관리자 확인: ${adminUrl}`;
-  const html = `<h2>${escapeHtml(kind)}</h2><p><strong>이름</strong>: ${escapeHtml(row.name)}</p><p><strong>이메일</strong>: ${escapeHtml(row.email || '-')}</p><p><strong>연락처</strong>: ${escapeHtml(row.phone || '-')}</p><p><strong>제목</strong>: ${escapeHtml(row.subject || '-')}</p><hr><p style="white-space:pre-wrap">${escapeHtml(row.question)}</p><p><a href="${adminUrl}">관리자 화면에서 확인</a></p>`;
+  const receivedAt = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const pageUrl = sourcePage(request);
+  const text = `문의 유형: ${kind}\n작성자 이름: ${row.name}\n작성자 이메일: ${row.email || '-'}\n연락처: ${row.phone || '-'}\n문의 제목: ${row.subject || '-'}\n문의 내용:\n${row.question}\n\n접수 시각: ${receivedAt}\n접수 페이지: ${pageUrl}\n관리자 확인: ${adminUrl}`;
+  const html = `<h2>${escapeHtml(kind)}</h2><p><strong>작성자 이름</strong>: ${escapeHtml(row.name)}</p><p><strong>작성자 이메일</strong>: ${escapeHtml(row.email || '-')}</p><p><strong>연락처</strong>: ${escapeHtml(row.phone || '-')}</p><p><strong>문의 제목</strong>: ${escapeHtml(row.subject || '-')}</p><p><strong>문의 내용</strong></p><p style="white-space:pre-wrap">${escapeHtml(row.question)}</p><hr><p><strong>접수 시각</strong>: ${escapeHtml(receivedAt)}</p><p><strong>접수 페이지</strong>: <a href="${escapeHtml(pageUrl)}">${escapeHtml(pageUrl)}</a></p><p><a href="${adminUrl}">관리자 화면에서 확인</a></p>`;
   return { subject, text, html };
 }
 
-async function sendEmail(row) {
+async function sendEmail(row, request) {
   if (!RESEND_KEY || !TO_EMAIL) throw new Error('email_not_configured');
-  const content = emailContent(row);
+  const content = emailContent(row, request);
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
@@ -71,6 +84,18 @@ async function sendEmail(row) {
 }
 
 export default async function handler(request, response) {
+  if (request.method === 'GET' && request.query?.health === '1') {
+    return json(response, 200, {
+      ok: true,
+      provider: 'resend',
+      configured: {
+        database: Boolean(SERVICE_KEY),
+        mail: Boolean(RESEND_KEY),
+        recipient: TO_EMAIL.toLowerCase() === 'ccuccuci@gmail.com',
+        sender: Boolean(FROM_EMAIL)
+      }
+    });
+  }
   if (request.method !== 'POST') return json(response, 405, { ok: false, message: '허용되지 않은 요청입니다.' });
   if (Number(request.headers?.['content-length'] || 0) > 20000) return json(response, 413, { ok: false, message: '입력 내용이 너무 깁니다.' });
   const checked = validateAndClassify(request.body || {});
@@ -108,12 +133,14 @@ export default async function handler(request, response) {
     const row = rows?.[0];
     if (!row || checked.spam) return json(response, 202, { ok: true });
     try {
-      const providerId = await sendEmail(row);
+      const providerId = await sendEmail(row, request);
       await supabase(`inquiries?id=eq.${encodeURIComponent(row.id)}`, { method: 'PATCH', body: JSON.stringify({ email_status: 'sent', email_provider_id: providerId, email_error: '', email_sent_at: new Date().toISOString() }) });
+      return json(response, 201, { ok: true, emailStatus: 'sent' });
     } catch (error) {
       await supabase(`inquiries?id=eq.${encodeURIComponent(row.id)}`, { method: 'PATCH', body: JSON.stringify({ email_status: 'failed', email_error: safeHeader(error.message).slice(0, 240) }) }).catch(() => {});
+      console.error('inquiry_email_failed', safeHeader(error.message));
+      return json(response, 502, { ok: false, saved: true, message: '전송하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
     }
-    return json(response, 201, { ok: true });
   } catch (error) {
     console.error('inquiry_submit_failed', safeHeader(error.message));
     return json(response, 503, { ok: false, message: '지금은 문의를 접수할 수 없습니다. 잠시 후 다시 시도해 주세요.' });

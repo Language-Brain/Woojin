@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../customer/index.html',import.meta.url),'utf8');
 assert.match(html,/heroTitle\.textContent='삶과 언어'/);
-assert.match(html,/heroLead\.textContent='언어의 문제는 곧 삶의 문제가 됩니다\.'/);
+assert.match(html,/heroLead\.textContent='삶과 언어는 권우진이 언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 연구 자료를 나누는 연구실입니다\.'/);
 assert.match(html,/문해\(Literacy\), 인지\(Cognition\), 한국어 교육\(KSL, KFL\)을 포함한/);
 assert.match(html,/여러 화두는 서로 연결되어 있습니다\./);
 assert.match(html,/heroDescription\.replaceChildren\(heroDescriptionLine1,heroDescriptionLine2\)/);

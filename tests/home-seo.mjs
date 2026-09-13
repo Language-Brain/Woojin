@@ -6,7 +6,7 @@ const home = readFileSync(new URL('../customer/index.html', import.meta.url), 'u
 const seo = readFileSync(new URL('../api/_seo.js', import.meta.url), 'utf8');
 const sitemap = readFileSync(new URL('../api/sitemap.js', import.meta.url), 'utf8');
 const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
-const description = '삶과 언어는 문해, 인지, 한국어 교육(KSL, KFL)을 중심으로 논문, 관련 기사와 연구 원고를 소개하는 권우진의 연구 공간입니다.';
+const description = '언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 논문·뉴스·연구 원고와 교육 자료를 소개하는 권우진의 연구 공간입니다.';
 
 assert.match(home, /<title>삶과 언어 \| 권우진 연구실<\/title>/);
 assert.ok(home.includes(`<meta name="description" content="${description}">`));
@@ -15,6 +15,7 @@ assert.ok(home.includes(`<meta property="og:description" content="${description}
 assert.match(home, /<meta name="twitter:title" content="삶과 언어 \| 권우진 연구실">/);
 assert.ok(home.includes(`<meta name="twitter:description" content="${description}">`));
 assert.match(home, /<link rel="canonical" href="https:\/\/languagebrain\.vercel\.app\/">/);
+assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest">/);
 assert.match(home, /<meta name="robots" content="index, follow, max-image-preview:large">/);
 assert.match(home, /"@type":"WebSite"[^}]*"name":"삶과 언어","alternateName":"권우진 연구실"/);
 assert.match(seo, /post\.seo_description \|\| post\.excerpt \|\| meaningfulBodyText\(post\.content_html, post\)/);
