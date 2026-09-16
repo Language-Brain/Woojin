@@ -15,7 +15,7 @@ for(const value of ['문서를 찾아보세요','href="/guides">보조 자료실
 for(const value of ['title','description','body','course_name','institution_name','tags','visibility=eq.public','showError','retry-guides','pageshow',"scope = validScopes.has",'search();','pyeongjaeItem','face-row','face-meta'])assert.ok(searchJs.includes(value),value);
 assert.ok(search.includes('/pyeongjae/list-row.css'));
 assert.doesNotMatch(searchJs,/visibility=eq.unlisted/);
-for(const value of ['get_unlisted_guide','noopener noreferrer','navigator.share','increment_guide_view'])assert.ok(detail.includes(value),value);
+for(const value of ['get_unlisted_guide','noopener noreferrer','navigator.share','/customer/public-view-count.js?v=20260917-2'])assert.ok(detail.includes(value),value);
 for(const value of ['data-view="guides"','id="guide-form"','id="guide-admin-search"','id="guide-admin-sort"'])assert.ok(admin.includes(value),value);
 assert.ok(adminCss.includes('.side-nav')&&adminCss.includes('overflow-y:auto'));
 for(const value of ['loadGuides','loadGuideTags','data-guide-action="trash"','data-guide-action="restore"','data-guide-action="delete"','guideTagEdit'])assert.ok(adminJs.includes(value),value);
