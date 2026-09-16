@@ -27,7 +27,8 @@
 
   async function rest(table, query) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
-      headers: { apikey: PUBLIC_KEY, Authorization: `Bearer ${PUBLIC_KEY}`, Accept: 'application/json' }
+      headers: { apikey: PUBLIC_KEY, Authorization: `Bearer ${PUBLIC_KEY}`, Accept: 'application/json' },
+      cache: 'no-store'
     });
     if (!response.ok) throw new Error(`${table} 요청 실패 (${response.status})`);
     return response.json();

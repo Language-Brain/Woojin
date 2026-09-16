@@ -28,7 +28,8 @@
 
   async function fetchRows() {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/pyeongjae_entries?select=*&status=eq.published&limit=1000`, {
-      headers: { apikey: PUBLIC_KEY, Authorization: `Bearer ${PUBLIC_KEY}`, Accept: 'application/json' }
+      headers: { apikey: PUBLIC_KEY, Authorization: `Bearer ${PUBLIC_KEY}`, Accept: 'application/json' },
+      cache: 'no-store'
     });
     if (!response.ok) throw new Error(`평재문집 요청 실패 (${response.status})`);
     return response.json();
@@ -124,6 +125,6 @@
     event.currentTarget.textContent = open ? '소개 접기' : '소개 더 보기';
     event.currentTarget.setAttribute('aria-expanded', String(open));
   });
-  addEventListener('pageshow', event => { if (event.persisted) render(); });
+  addEventListener('pageshow', event => { if (event.persisted) load(); });
   load();
 })();
