@@ -1,7 +1,10 @@
 .face-row{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(190px,220px);column-gap:14px;align-items:center;min-height:54px;padding:12px 6px;border-bottom:1px solid #d9d9d5;color:#17202a;text-decoration:none}
 .face-row:hover,.face-row:focus-visible{background:#f1f4f6}
 .face-number{align-self:center;font-size:16px;font-weight:700;color:#286d68;text-align:center;white-space:nowrap}
-.face-title{min-width:0;font-size:17px;line-height:1.45;font-weight:700;word-break:keep-all;overflow-wrap:break-word}
+.face-title{display:flex;align-items:baseline;min-width:0;overflow:hidden;white-space:nowrap;font-size:17px;line-height:1.45;font-weight:700;word-break:keep-all}
+.reading-star{flex:none;margin-right:.3em;color:#286d68;font-size:.9em}
+.face-title-main{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reading-guide{flex:1 999 auto;min-width:0;margin-left:.45em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#697078;font-size:14px;font-weight:400}
 .face-meta{justify-self:end;width:100%;text-align:right;color:#4f5f62;font-size:14px;line-height:1.5;font-weight:700;white-space:nowrap}
 .face-row.priority-row{grid-template-columns:minmax(0,1fr) minmax(190px,220px)}
 @media(max-width:600px){.face-row{grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;row-gap:3px;padding:11px 2px;min-height:64px}.face-number{grid-column:1;grid-row:1 / span 2;align-self:start;padding-top:2px;font-size:15px}.face-title{grid-column:2;grid-row:1;font-size:17px;line-height:1.48}.face-meta{grid-column:2;grid-row:2;justify-self:start;width:auto;text-align:left;white-space:nowrap;font-size:14px}.face-row.priority-row{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto}.priority-row .face-title{grid-column:1;grid-row:1}.priority-row .face-meta{grid-column:1;grid-row:2}}

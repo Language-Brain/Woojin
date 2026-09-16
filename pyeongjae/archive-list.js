@@ -9,6 +9,7 @@
   let rows = [];
   let book = ['1', '2', '3'].includes(params.get('book')) ? params.get('book') : '';
   let genre = params.get('genre') || '';
+  let recommended = params.get('recommended') === '1';
   let page = 1;
   query.value = params.get('q') || '';
 
@@ -38,7 +39,8 @@
     query.value.trim() ? next.searchParams.set('q', query.value.trim()) : next.searchParams.delete('q');
     book ? next.searchParams.set('book', book) : next.searchParams.delete('book');
     genre ? next.searchParams.set('genre', genre) : next.searchParams.delete('genre');
-    history.replaceState({ book, genre, q: query.value.trim() }, '', next);
+    recommended ? next.searchParams.set('recommended', '1') : next.searchParams.delete('recommended');
+    history.replaceState({ book, genre, recommended, q: query.value.trim() }, '', next);
   }
 
   function pagination(total) {
@@ -61,11 +63,12 @@
     const ordinals = new Map(ordered.filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
     const found = ordered.filter(row => (!book || (!isGuide(row) && String(row.book_no) === book))
       && (!genre || row.genre === genre)
-      && (!needle || [row.title, row.guide_body, row.genre, row.volume_no, row.sheet_no, ...(Array.isArray(row.tags) ? row.tags : []), ...(Array.isArray(row.pages) ? row.pages.map(plainPage) : [])].join(' ').toLocaleLowerCase('ko-KR').includes(needle)));
+      && (!recommended || (!isGuide(row) && row.recommended_reading === true))
+      && (!needle || [row.title, row.reading_guide, row.guide_body, row.genre, row.volume_no, row.sheet_no, ...(Array.isArray(row.tags) ? row.tags : []), ...(Array.isArray(row.pages) ? row.pages.map(plainPage) : [])].join(' ').toLocaleLowerCase('ko-KR').includes(needle)));
     pagination(found.length);
     const shown = found.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     document.querySelector('#count').textContent = `검색 결과 ${found.length}건`;
-    list.innerHTML = shown.length ? shown.map(row => { const number = ordinals.get(row.id), meta=isGuide(row)?`안내 글 · 조회 ${Number(row.view_count || 0).toLocaleString()}`:`${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${esc(row.genre || '종류 미확인')} · 조회 ${Number(row.view_count || 0).toLocaleString()}`; return `<a class="entry-row face-row${number ? '' : ' priority-row'}" href="/pyeongjae-entry?id=${encodeURIComponent(row.id)}">${number ? `<span class="face-number" aria-label="전체 평재문집 순차 번호 ${number}">${number}</span>` : ''}<strong class="face-title">${esc(row.title)}</strong><span class="face-meta">${meta}</span></a>` }).join('') : '<p class="empty">조건에 맞는 공개 자료가 없습니다.</p>';
+    list.innerHTML = shown.length ? shown.map(row => { const number = ordinals.get(row.id), guide=isGuide(row), readingGuide=!guide?String(row.reading_guide||'').trim():'', recommendedRow=!guide&&row.recommended_reading===true, meta=guide?`안내 글 · 조회 ${Number(row.view_count || 0).toLocaleString()}`:`${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${esc(row.genre || '종류 미확인')} · 조회 ${Number(row.view_count || 0).toLocaleString()}`, fullTitle=[recommendedRow?'★':'',row.title,readingGuide?`— ${readingGuide}`:''].filter(Boolean).join(' '); return `<a class="entry-row face-row${number ? '' : ' priority-row'}" href="/pyeongjae-entry?id=${encodeURIComponent(row.id)}" aria-label="${esc(fullTitle)}">${number ? `<span class="face-number" aria-label="전체 평재문집 순차 번호 ${number}">${number}</span>` : ''}<strong class="face-title" title="${esc(fullTitle)}">${recommendedRow?'<span class="reading-star" aria-hidden="true">★</span>':''}<span class="face-title-main">${esc(row.title)}</span>${readingGuide?`<span class="reading-guide">— ${esc(readingGuide)}</span>`:''}</strong><span class="face-meta">${meta}</span></a>` }).join('') : `<p class="empty">${recommended?'아직 추천해서 읽을 자료가 없습니다.':'조건에 맞는 공개 자료가 없습니다.'}</p>`;
   }
 
   function resetRender() { page = 1; render(); }
@@ -96,6 +99,15 @@
       document.querySelectorAll('[data-genre]').forEach(item => item.classList.toggle('active', item === button));
       resetRender();
     });
+  });
+  const recommendedFilter = document.querySelector('#recommended-filter');
+  recommendedFilter?.classList.toggle('active', recommended);
+  recommendedFilter?.setAttribute('aria-pressed', String(recommended));
+  recommendedFilter?.addEventListener('click', () => {
+    recommended = !recommended;
+    recommendedFilter.classList.toggle('active', recommended);
+    recommendedFilter.setAttribute('aria-pressed', String(recommended));
+    resetRender();
   });
   document.querySelector('#pagination').addEventListener('click', event => {
     const button = event.target.closest('[data-page]');

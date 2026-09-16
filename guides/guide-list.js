@@ -70,7 +70,28 @@
     link.classList.toggle('priority-row', !number);
     const title = document.createElement('strong');
     title.className = 'face-title';
-    title.textContent = row.title;
+    const recommended = !isGuide(row) && row.recommended_reading === true;
+    const readingGuide = !isGuide(row) ? String(row.reading_guide || '').trim() : '';
+    const fullTitle = [recommended ? '★' : '', row.title, readingGuide ? `— ${readingGuide}` : ''].filter(Boolean).join(' ');
+    link.setAttribute('aria-label', fullTitle);
+    title.title = fullTitle;
+    if (recommended) {
+      const star = document.createElement('span');
+      star.className = 'reading-star';
+      star.setAttribute('aria-hidden', 'true');
+      star.textContent = '★';
+      title.append(star);
+    }
+    const titleMain = document.createElement('span');
+    titleMain.className = 'face-title-main';
+    titleMain.textContent = row.title;
+    title.append(titleMain);
+    if (readingGuide) {
+      const guide = document.createElement('span');
+      guide.className = 'reading-guide';
+      guide.textContent = `— ${readingGuide}`;
+      title.append(guide);
+    }
     const meta = document.createElement('span');
     meta.className = 'face-meta';
     meta.textContent = isGuide(row) ? `안내 글 · 조회 ${Number(row.view_count || 0).toLocaleString()}` : `${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${row.genre || '종류 미확인'} · 조회 ${Number(row.view_count || 0).toLocaleString()}`;
@@ -106,10 +127,10 @@
   }
 
   async function pyeongjae() {
-    const rows = await rest('pyeongjae_entries', 'select=id,entry_kind,guide_body,book_no,sheet_no,start_page,side,title,work_title,summary,people,places,tags,pages,volume_no,genre,view_count,created_at,published_at,updated_at&status=eq.published&limit=1000');
+    const rows = await rest('pyeongjae_entries', 'select=id,entry_kind,guide_body,book_no,sheet_no,start_page,side,title,work_title,summary,people,places,tags,pages,volume_no,genre,recommended_reading,reading_guide,view_count,created_at,published_at,updated_at&status=eq.published&limit=1000');
     const sorted = rows.sort(compare);
     const ordinals = new Map(sorted.filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
-    return sorted.filter(row => match([row.title, row.guide_body, row.work_title, row.summary, ...(Array.isArray(row.people) ? row.people : []), ...(Array.isArray(row.places) ? row.places : []), ...(Array.isArray(row.tags) ? row.tags : []), JSON.stringify(row.pages || [])].join(' ')))
+    return sorted.filter(row => match([row.title, row.reading_guide, row.guide_body, row.work_title, row.summary, ...(Array.isArray(row.people) ? row.people : []), ...(Array.isArray(row.places) ? row.places : []), ...(Array.isArray(row.tags) ? row.tags : []), JSON.stringify(row.pages || [])].join(' ')))
       .map(row => pyeongjaeItem(row, ordinals.get(row.id)));
   }
 

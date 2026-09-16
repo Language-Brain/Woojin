@@ -65,6 +65,7 @@
 #view-pyeongjae .pj-biblio label,#view-pyeongjae .pj-title-grid label,#view-pyeongjae .pj-page-editor label{min-width:0;font-size:22px;line-height:1.35;font-weight:700;overflow-wrap:normal;word-break:keep-all}
 #view-pyeongjae .pj-biblio input,#view-pyeongjae .pj-biblio select,#view-pyeongjae .pj-title-grid input,#view-pyeongjae .pj-title-grid textarea,#view-pyeongjae .pj-page-meta input,#view-pyeongjae .pj-page-meta select{width:100%;min-height:52px;margin-top:6px;padding:10px 12px;font:400 21px/1.45 var(--sans);border:1px solid #aeb7c1;border-radius:4px}
 #view-pyeongjae .pj-title-grid{gap:12px 18px;margin-top:15px}
+#view-pyeongjae .pj-reading-recommendation{display:grid;grid-template-columns:minmax(190px,.45fr) minmax(0,1.55fr);align-items:start;gap:12px 18px}#view-pyeongjae .pj-reading-recommendation .check-row{min-height:52px;margin:35px 0 0}#view-pyeongjae .pj-reading-recommendation .check-row input{width:24px;min-height:24px;margin:0}
 #view-pyeongjae .pj-title-grid small,#view-pyeongjae .pj-paste small{display:block;margin-top:6px;font-size:18px;line-height:1.5;color:var(--muted)}
 #view-pyeongjae .pj-paste{margin:16px 0;padding-top:13px}
 #view-pyeongjae .pj-paste summary,#view-pyeongjae details>summary,#view-pyeongjae .pj-page-toolbar>strong{font-size:21px}
