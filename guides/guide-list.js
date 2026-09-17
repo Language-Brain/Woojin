@@ -9,6 +9,12 @@
   const validScopes = new Set(['all', 'pyeongjae', 'other']);
   let scope = validScopes.has(params.get('scope')) ? params.get('scope') : 'all';
   input.value = params.get('q') || '';
+  if (scope === 'pyeongjae') {
+    const target = new URL('/pyeongjae', location.origin);
+    if (input.value.trim()) target.searchParams.set('q', input.value.trim());
+    location.replace(target.href);
+    return;
+  }
 
   const safe = value => String(value || '').replace(/[,%()]/g, ' ').trim().slice(0, 100);
   const date = value => value ? new Date(value).toLocaleDateString('ko-KR') : '-';

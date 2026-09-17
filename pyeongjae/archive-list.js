@@ -10,6 +10,7 @@
   let book = ['1', '2', '3'].includes(params.get('book')) ? params.get('book') : '';
   let genre = params.get('genre') || '';
   let recommended = params.get('recommended') === '1';
+  if (genre || recommended) book = '';
   let page = 1;
   query.value = params.get('q') || '';
 
@@ -20,6 +21,7 @@
   const priorityRank = row => { const title = String(row?.title || '').trimStart(); if (isGuide(row) || title.startsWith('○') || title.startsWith('#')) return title.startsWith('○') ? 0 : title.startsWith('#') ? 1 : 2; return 3; };
   const isPriority = row => priorityRank(row) < 3;
   const createdTime = row => Date.parse(row?.created_at || row?.published_at || row?.updated_at || '') || 0;
+  const matchesGenre = row => !genre || row.genre === genre || (['복합', '경계'].includes(genre) && String(row.genre || '').includes(genre));
   const compare = (a, b) => priorityRank(a) - priorityRank(b)
     || (isPriority(a) && isPriority(b) ? createdTime(a) - createdTime(b) : 0)
     || Number(a.book_no || 0) - Number(b.book_no || 0)
@@ -62,17 +64,27 @@
     const needle = query.value.trim().toLocaleLowerCase('ko-KR');
     const ordered = [...rows].sort(compare);
     const ordinals = new Map(ordered.filter(row => !isPriority(row)).map((row, index) => [row.id, index + 1]));
-    const found = ordered.filter(row => (!book || (!isGuide(row) && String(row.book_no) === book))
-      && (!genre || row.genre === genre)
+    const found = ordered.filter(row => (!book || (book === '1' && isGuide(row)) || (!isGuide(row) && String(row.book_no) === book))
+      && matchesGenre(row)
       && (!recommended || (!isGuide(row) && row.recommended_reading === true))
       && (!needle || [row.title, row.reading_guide, row.guide_body, row.genre, row.volume_no, row.sheet_no, ...(Array.isArray(row.tags) ? row.tags : []), ...(Array.isArray(row.pages) ? row.pages.map(plainPage) : [])].join(' ').toLocaleLowerCase('ko-KR').includes(needle)));
     pagination(found.length);
     const shown = found.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    document.querySelector('#count').textContent = `검색 결과 ${found.length}건`;
+    const guideCount = found.filter(isGuide).length;
+    const sourceCount = found.length - guideCount;
+    document.querySelector('#count').textContent = book === '1' && guideCount
+      ? `제1책 ${sourceCount}건 · 안내 글 ${guideCount}건`
+      : `검색 결과 ${found.length}건`;
     list.innerHTML = shown.length ? shown.map(row => { const number = ordinals.get(row.id), guide=isGuide(row), readingGuide=!guide?String(row.reading_guide||'').trim():'', recommendedRow=!guide&&row.recommended_reading===true, meta=guide?`안내 글 · 조회 ${Number(row.view_count || 0).toLocaleString()}`:`${row.volume_no ? `권${row.volume_no}` : '권차 미확인'} · ${esc(row.genre || '종류 미확인')} · 조회 ${Number(row.view_count || 0).toLocaleString()}`, fullTitle=[recommendedRow?'★':'',row.title,readingGuide?`— ${readingGuide}`:''].filter(Boolean).join(' '); return `<a class="entry-row face-row${number ? '' : ' priority-row'}" href="/pyeongjae-entry?id=${encodeURIComponent(row.id)}" aria-label="${esc(fullTitle)}">${number ? `<span class="face-number" aria-label="전체 평재문집 순차 번호 ${number}">${number}</span>` : ''}<strong class="face-title" title="${esc(fullTitle)}">${recommendedRow?'<span class="reading-star" aria-hidden="true">★</span>':''}<span class="face-title-main">${esc(row.title)}</span>${readingGuide?`<span class="reading-guide">— ${esc(readingGuide)}</span>`:''}</strong><span class="face-meta">${meta}</span></a>` }).join('') : `<p class="empty">${recommended?'아직 추천해서 읽을 자료가 없습니다.':'조건에 맞는 공개 자료가 없습니다.'}</p>`;
   }
 
   function resetRender() { page = 1; render(); }
+  function syncFilterButtons() {
+    document.querySelectorAll('[data-book]').forEach(item => item.classList.toggle('active', item.dataset.book === book));
+    document.querySelectorAll('[data-genre]').forEach(item => item.classList.toggle('active', item.dataset.genre === genre));
+    recommendedFilter?.classList.toggle('active', recommended);
+    recommendedFilter?.setAttribute('aria-pressed', String(recommended));
+  }
   function showError(error) {
     console.error('평재문집 목록 초기화 실패', error);
     document.querySelector('#count').textContent = '자료를 불러오지 못했습니다.';
@@ -89,7 +101,9 @@
     button.classList.toggle('active', button.dataset.book === book);
     button.addEventListener('click', () => {
       book = button.dataset.book;
-      document.querySelectorAll('[data-book]').forEach(item => item.classList.toggle('active', item === button));
+      genre = '';
+      recommended = false;
+      syncFilterButtons();
       resetRender();
     });
   });
@@ -97,7 +111,9 @@
     button.classList.toggle('active', button.dataset.genre === genre);
     button.addEventListener('click', () => {
       genre = button.dataset.genre;
-      document.querySelectorAll('[data-genre]').forEach(item => item.classList.toggle('active', item === button));
+      recommended = false;
+      if (genre) book = '';
+      syncFilterButtons();
       resetRender();
     });
   });
@@ -106,8 +122,11 @@
   recommendedFilter?.setAttribute('aria-pressed', String(recommended));
   recommendedFilter?.addEventListener('click', () => {
     recommended = !recommended;
-    recommendedFilter.classList.toggle('active', recommended);
-    recommendedFilter.setAttribute('aria-pressed', String(recommended));
+    if (recommended) {
+      book = '';
+      genre = '';
+    }
+    syncFilterButtons();
     resetRender();
   });
   document.querySelector('#pagination').addEventListener('click', event => {
