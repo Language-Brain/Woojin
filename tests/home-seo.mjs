@@ -7,6 +7,7 @@ const seo = readFileSync(new URL('../api/_seo.js', import.meta.url), 'utf8');
 const sitemap = readFileSync(new URL('../api/sitemap.js', import.meta.url), 'utf8');
 const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+const videoApi = readFileSync(new URL('../api/video.js', import.meta.url), 'utf8');
 const archiveEntries = Object.fromEntries(['papers', 'news', 'works', 'videos'].map(kind => [kind,
   readFileSync(new URL(kind === 'papers' ? '../archive/index.html' : `../archive/${kind}.html`, import.meta.url), 'utf8')
 ]));
@@ -39,6 +40,9 @@ for (const [kind, html] of Object.entries(archiveEntries)) {
   assert.match(html, new RegExp(`<link id="canonical" rel="canonical" href="https:\\/\\/literacy-korea\\.com\\/${kind}">`));
   assert.match(html, new RegExp(`<meta id="og-url" property="og:url" content="https:\\/\\/literacy-korea\\.com\\/${kind}">`));
 }
+assert.match(videoApi, /const canonical = `\$\{SITE_URL\}\/video\?id=\$\{encodeURIComponent\(video\.id\)\}`/);
+assert.match(videoApi, /property="og:site_name" content="삶과 언어"/);
+assert.match(videoApi, /'@type':'VideoObject'/);
 assert.equal(descriptionFor({ seo_description: '별도 검색 설명', excerpt: '기존 설명', content_html: '<p>본문 설명입니다.</p>' }), '별도 검색 설명');
 assert.equal(descriptionFor({ content_html: '<h2>소제목</h2><p>이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다.</p><p>다음 문단입니다.</p>' }), '이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다. 다음 문단입니다.');
 assert.equal(descriptionFor({ title: '반복 제목', authors: '홍길동', content_html: '<p>반복 제목</p><p>홍길동</p><p>검색 설명에는 실제 본문의 첫 번째 의미 있는 문장이 사용되어야 합니다.</p>' }), '검색 설명에는 실제 본문의 첫 번째 의미 있는 문장이 사용되어야 합니다.');
