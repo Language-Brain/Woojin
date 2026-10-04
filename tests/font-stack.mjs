@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const files = ['../customer/index.html', '../archive/archive.css', '../admin/admin.css', '../admin/index.html', '../admin/admin.js', '../api/article-template.js', '../video/index.html'];
+const files = ['../customer/index.html', '../archive/archive.css', '../admin/admin.css', '../admin/index.html', '../admin/admin.js', '../api/article-template.js', '../api/video.js'];
 const texts = Object.fromEntries(files.map(file => [file, fs.readFileSync(new URL(file, import.meta.url), 'utf8')]));
 texts['../api/article-template.js'] = JSON.parse(texts['../api/article-template.js'].replace(/^export default\s*/, '').replace(/;\s*$/, ''));
 const stack = '"Nanum Gothic","Noto Sans KR","함초롬돋움","HCR Dotum","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
