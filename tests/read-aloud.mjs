@@ -28,6 +28,11 @@ assert.match(module, /한국어 음성을 준비하고 있습니다\. 잠시 후
 assert.match(module, /\[읽어주기\] 본문 미발견/);
 assert.match(module, /\[읽어주기\] 음성 목록 준비 중/);
 assert.match(module, /\[읽어주기\] Web Speech API 미지원/);
+assert.match(module, /collectPyeongjaeSource/);
+assert.match(module, /\.literal-translation,\.interpretive-translation/);
+assert.match(module, /읽을 수 있는 현대어 직역 또는 의역이 없습니다\./);
+assert.match(pyeongjae, /page\.literal_translation,'literal-translation'/);
+assert.match(pyeongjae, /page\.interpretive_translation,'interpretive-translation'/);
 assert.match(module, /Google\|Microsoft\|Siri\|Samsung\|Natural\|Online/);
 assert.match(module, /reader-speaking/);
 assert.match(module, /script,style,noscript,img,svg,video,audio,iframe/);
@@ -38,8 +43,8 @@ assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
   assert.match(source, /DOMContentLoaded/);
   assert.match(source, /pageshow/);
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-11/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-11/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-12/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-12/);
 }
 assert.match(guide, /LanguageBrainReadAloud\?\.initialize\(\)/);
 
