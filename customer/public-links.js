@@ -82,13 +82,14 @@
   if (!document.querySelector('link[data-read-aloud]')) {
     const style = document.createElement('link');
     style.rel = 'stylesheet';
-    style.href = '/customer/read-aloud.css?v=20261004-2';
+    style.href = '/customer/read-aloud.css?v=20261004-3';
     style.dataset.readAloud = 'true';
     document.head.append(style);
   }
   if (!document.querySelector('script[data-read-aloud]')) {
     const script = document.createElement('script');
-    script.src = '/customer/read-aloud.js?v=20261004-2';
+    script.src = '/customer/read-aloud.js?v=20261004-3';
+    script.async = false;
     script.dataset.readAloud = 'true';
     document.body.append(script);
   }
