@@ -4,7 +4,7 @@
   const fallback = {
     supabaseUrl: 'https://vhaosgzyvoijgwryybry.supabase.co',
     supabasePublishableKey: 'sb_publishable_Obv4RYPtgwB71vZ4vOM0iA_jxPfeuZa',
-    siteUrl: 'https://languagebrain.vercel.app'
+    siteUrl: 'https://literacy-korea.com'
   };
   const recoveryRequested = /(?:[?#&]type=recovery)/.test(location.href);
   const config = window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl && window.LANGUAGE_BRAIN_CONFIG?.supabasePublishableKey ? window.LANGUAGE_BRAIN_CONFIG : fallback;

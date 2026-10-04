@@ -5,7 +5,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 const RESEND_KEY = process.env.RESEND_API_KEY || '';
 const TO_EMAIL = process.env.INQUIRY_TO_EMAIL || 'ccuccuci@gmail.com';
 const FROM_EMAIL = process.env.INQUIRY_FROM_EMAIL || '삶과 언어 홈페이지 <onboarding@resend.dev>';
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://languagebrain.vercel.app').replace(/\/$/, '');
+const SITE_URL = 'https://literacy-korea.com';
 
 function json(response, status, body) {
   response.setHeader('Content-Type', 'application/json; charset=utf-8');

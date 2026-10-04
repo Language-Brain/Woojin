@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://languagebrain.vercel.app/sitemap.xml
+Sitemap: https://literacy-korea.com/sitemap.xml

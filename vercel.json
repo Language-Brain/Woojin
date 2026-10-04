@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "languagebrain.vercel.app" }],
+      "destination": "https://literacy-korea.com/:path*",
+      "permanent": true
+    },
     { "source": "/customer", "destination": "/", "permanent": true },
     { "source": "/customer/index.html", "destination": "/", "permanent": true },
     { "source": "/index.html", "destination": "/", "permanent": true },

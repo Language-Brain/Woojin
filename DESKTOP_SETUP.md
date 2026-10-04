@@ -6,8 +6,8 @@
 
 - GitHub 저장소: https://github.com/Language-Brain/Woojin.git
 - 기본 브랜치: `main`
-- 공개 이용자 페이지: https://languagebrain.vercel.app/customer
-- 관리자 페이지: https://languagebrain.vercel.app/admin
+- 공개 이용자 페이지: https://literacy-korea.com/
+- 관리자 페이지: https://literacy-korea.com/admin
 - Supabase 프로젝트 ID: `vhaosgzyvoijgwryybry`
 - 구성: 정적 HTML·CSS·JavaScript, Vercel Serverless 설정 API, Supabase Database·Auth·Storage
 
@@ -39,7 +39,7 @@ git pull --ff-only origin main
 
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase Dashboard → Project Settings → Data API에서 확인
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase Dashboard → Project Settings → API Keys에서 `Publishable key` 확인
-- `NEXT_PUBLIC_SITE_URL`: 운영 주소 `https://languagebrain.vercel.app`
+- `NEXT_PUBLIC_SITE_URL`: 운영 주소 `https://literacy-korea.com`
 
 로컬에서 Vercel 방식으로 실행할 때만 `.env.example`을 `.env.local`로 복사한 뒤 실제 값을 채웁니다.
 

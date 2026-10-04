@@ -6,6 +6,7 @@ const home = readFileSync(new URL('../customer/index.html', import.meta.url), 'u
 const seo = readFileSync(new URL('../api/_seo.js', import.meta.url), 'utf8');
 const sitemap = readFileSync(new URL('../api/sitemap.js', import.meta.url), 'utf8');
 const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
+const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 const description = '언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 논문·뉴스·연구 원고와 교육 자료를 소개하는 권우진의 연구 공간입니다.';
 
 assert.match(home, /<title>삶과 언어 \| 권우진 연구실<\/title>/);
@@ -14,7 +15,7 @@ assert.match(home, /<meta property="og:title" content="삶과 언어 \| 권우�
 assert.ok(home.includes(`<meta property="og:description" content="${description}">`));
 assert.match(home, /<meta name="twitter:title" content="삶과 언어 \| 권우진 연구실">/);
 assert.ok(home.includes(`<meta name="twitter:description" content="${description}">`));
-assert.match(home, /<link rel="canonical" href="https:\/\/languagebrain\.vercel\.app\/">/);
+assert.match(home, /<link rel="canonical" href="https:\/\/literacy-korea\.com\/">/);
 assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest">/);
 assert.match(home, /<meta name="robots" content="index, follow, max-image-preview:large">/);
 assert.match(home, /"@type":"WebSite"[^}]*"name":"삶과 언어","alternateName":"권우진 연구실"/);
@@ -25,7 +26,12 @@ assert.match(sitemap, /status=eq\.published&type=in\.\(paper,news,works\)/);
 assert.match(sitemap, /status=eq\.active&visibility=eq\.public/);
 assert.match(sitemap, /lastmod: latest\(posts\.filter\(post => post\.type === 'paper'\)\)/);
 assert.match(robots, /User-agent: \*\s+Allow: \/\s+Disallow: \/admin\s+Disallow: \/api\//);
-assert.match(robots, /Sitemap: https:\/\/languagebrain\.vercel\.app\/sitemap\.xml/);
+assert.match(robots, /Sitemap: https:\/\/literacy-korea\.com\/sitemap\.xml/);
+assert.ok(home.includes('"@type":"WebSite","@id":"https://literacy-korea.com/#website","url":"https://literacy-korea.com/","name":"삶과 언어"'));
+assert.ok(vercel.redirects.some(rule => rule.source === '/:path*'
+  && rule.destination === 'https://literacy-korea.com/:path*'
+  && rule.permanent === true
+  && rule.has?.some(condition => condition.type === 'host' && condition.value === 'languagebrain.vercel.app')));
 assert.equal(descriptionFor({ seo_description: '별도 검색 설명', excerpt: '기존 설명', content_html: '<p>본문 설명입니다.</p>' }), '별도 검색 설명');
 assert.equal(descriptionFor({ content_html: '<h2>소제목</h2><p>이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다.</p><p>다음 문단입니다.</p>' }), '이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다. 다음 문단입니다.');
 assert.equal(descriptionFor({ title: '반복 제목', authors: '홍길동', content_html: '<p>반복 제목</p><p>홍길동</p><p>검색 설명에는 실제 본문의 첫 번째 의미 있는 문장이 사용되어야 합니다.</p>' }), '검색 설명에는 실제 본문의 첫 번째 의미 있는 문장이 사용되어야 합니다.');

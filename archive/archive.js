@@ -13,7 +13,7 @@
     videos:{type:'video',title:'동영상',eyebrow:'VIDEO ARCHIVE',description:'언어와 뇌, 문해교육의 질문을 짧고 선명하게 살펴보는 영상 자료실입니다.'}
   }[kind];
   document.body.dataset.archiveKind=kind;
-  const canonicalUrl=`https://languagebrain.vercel.app/${kind}`;
+  const canonicalUrl=`https://literacy-korea.com/${kind}`;
   document.title=`${settings.title} | 삶과 언어`;
   document.querySelector('meta[name="description"]').content=settings.description;
   document.querySelector('#canonical').href=canonicalUrl;

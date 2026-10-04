@@ -1,4 +1,4 @@
-const baseUrl = (process.env.SITE_URL || 'https://languagebrain.vercel.app').replace(/\/$/, '');
+const baseUrl = (process.env.SITE_URL || 'https://literacy-korea.com').replace(/\/$/, '');
 
 function check(condition, message) {
   if (!condition) throw new Error(message);
