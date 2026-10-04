@@ -111,9 +111,9 @@ export default async function handler(request, response) {
     html = html
       .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(post.title)} | 삶과 언어</title>`)
       .replace(/<meta name="description"[^>]*>/i, `<meta name="description" content="${escapeHtml(description)}">`)
-      .replace('</head>', `${head}<link rel="stylesheet" href="/customer/article-lightbox.css?v=20260831-3"><link rel="stylesheet" href="/customer/reader-text-size.css?v=20260909-3"><link rel="stylesheet" href="/customer/read-aloud.css?v=20261004-6"></head>`)
+      .replace('</head>', `${head}<link rel="stylesheet" href="/customer/article-lightbox.css?v=20260831-3"><link rel="stylesheet" href="/customer/reader-text-size.css?v=20260909-3"><link rel="stylesheet" href="/customer/read-aloud.css?v=20261004-7"><script defer src="/customer/read-aloud.js?v=20261004-7"></script></head>`)
       .replace(/<main id="article">[\s\S]*?<\/main>/i, `<main id="article">${renderArticle(post)}</main>`)
-      .replace('</body>', '<dialog id="image-lightbox" class="image-lightbox" aria-label="확대 이미지"><div class="image-lightbox-inner"><button class="image-lightbox-close" type="button" aria-label="확대 이미지 닫기">×</button><img class="image-lightbox-image" alt=""></div></dialog><script src="/customer/public-links.js?v=20260914-1"></script><script src="/customer/article-lightbox.js?v=20260831-3"></script><script src="/customer/reader-text-size.js?v=20260909-2"></script><script src="/customer/public-view-count.js?v=20260917-2"></script><script src="/customer/read-aloud.js?v=20261004-6"></script></body>')
+      .replace('</body>', '<dialog id="image-lightbox" class="image-lightbox" aria-label="확대 이미지"><div class="image-lightbox-inner"><button class="image-lightbox-close" type="button" aria-label="확대 이미지 닫기">×</button><img class="image-lightbox-image" alt=""></div></dialog><script src="/customer/public-links.js?v=20260914-1"></script><script src="/customer/article-lightbox.js?v=20260831-3"></script><script src="/customer/reader-text-size.js?v=20260909-2"></script><script src="/customer/public-view-count.js?v=20260917-2"></script></body>')
       .replaceAll('href="/customer"', 'href="/"');
     response.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600');
     return response.status(200).send(html);

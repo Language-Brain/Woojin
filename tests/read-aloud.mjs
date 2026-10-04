@@ -24,8 +24,8 @@ assert.match(styles, /\.reader-speaking\{background:#e9f3ef/);
 assert.match(styles, /focus-visible/);
 assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-6/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-6/);
+  assert.match(source, /defer src=["']\/customer\/read-aloud\.js\?v=20261004-7/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-7/);
 }
 
 console.log('public read aloud controls: PASS');
