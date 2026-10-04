@@ -15,6 +15,7 @@ for (const marker of ['window.speechSynthesis', 'window.SpeechSynthesisUtterance
 }
 for (const label of ['🔊 읽어주기', '일시정지', '계속 듣기', '처음부터', '정지', '0.8배', '1.0배', '1.2배', '1.5배']) assert.ok(module.includes(label), label);
 for (const action of ['synth.pause()', 'synth.resume()', 'synth?.cancel()', "window.addEventListener('pagehide'"]) assert.ok(module.includes(action), action);
+assert.match(module, /DOMContentLoaded/);
 assert.match(module, /Google\|Microsoft\|Siri\|Samsung\|Natural\|Online/);
 assert.match(module, /reader-speaking/);
 assert.match(module, /script,style,noscript,img,svg,video,audio,iframe/);
@@ -23,8 +24,8 @@ assert.match(styles, /\.reader-speaking\{background:#e9f3ef/);
 assert.match(styles, /focus-visible/);
 assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-5/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-5/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-6/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-6/);
 }
 
 console.log('public read aloud controls: PASS');
