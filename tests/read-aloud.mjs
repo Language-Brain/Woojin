@@ -34,9 +34,10 @@ assert.match(styles, /\.reader-speaking\{background:#e9f3ef/);
 assert.match(styles, /focus-visible/);
 assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
-  assert.match(source, /addEventListener\(['"]load['"]/);
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-9/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-9/);
+  assert.match(source, /DOMContentLoaded/);
+  assert.match(source, /pageshow/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-10/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-10/);
 }
 assert.match(guide, /LanguageBrainReadAloud\?\.initialize\(\)/);
 
