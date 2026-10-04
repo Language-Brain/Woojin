@@ -79,4 +79,18 @@
   new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
     if (node.nodeType === Node.ELEMENT_NODE) enhance(node);
   }))).observe(document.body, { childList: true, subtree: true });
+  if (!document.querySelector('link[data-read-aloud]')) {
+    const style = document.createElement('link');
+    style.rel = 'stylesheet';
+    style.href = '/customer/read-aloud.css?v=20261004-1';
+    style.dataset.readAloud = 'true';
+    document.head.append(style);
+  }
+  if (!document.querySelector('script[data-read-aloud]')) {
+    const script = document.createElement('script');
+    script.src = '/customer/read-aloud.js?v=20261004-1';
+    script.defer = true;
+    script.dataset.readAloud = 'true';
+    document.body.append(script);
+  }
 })();
