@@ -21,10 +21,10 @@ assert.match(module, /script,style,noscript,img,svg,video,audio,iframe/);
 assert.match(module, /replace\(\/https\?:\\\/\\\/\\S\+\/gi/);
 assert.match(styles, /\.reader-speaking\{background:#e9f3ef/);
 assert.match(styles, /focus-visible/);
-assert.match(links, /import\('\/customer\/read-aloud\.js\?v=20261004-4'\)/);
-assert.match(links, /read-aloud\.css\?v=20261004-4/);
-for (const source of [article, guide, pyeongjae]) assert.match(source, /customer\/public-links\.js/);
-assert.match(video, /customer\/read-aloud\.js\?v=20261004-4/);
-assert.match(video, /customer\/read-aloud\.css\?v=20261004-4/);
+assert.doesNotMatch(links, /read-aloud/);
+for (const source of [article, guide, pyeongjae, video]) {
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-5/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-5/);
+}
 
 console.log('public read aloud controls: PASS');
