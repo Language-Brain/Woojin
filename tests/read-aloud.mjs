@@ -22,6 +22,8 @@ assert.match(module, /voiceschanged/);
 assert.match(module, /LanguageBrainReadAloud=\{initialize,refreshVoices\}/);
 assert.match(module, /document\.querySelector\('\.read-aloud-controls'\)/);
 assert.match(module, /observer\.disconnect\(\)/);
+assert.match(module, /stabilityTimer=setTimeout/);
+assert.match(module, /setTimeout\(initialize,300\)/);
 assert.match(module, /한국어 음성을 준비하고 있습니다\. 잠시 후 다시 눌러 주세요\./);
 assert.match(module, /\[읽어주기\] 본문 미발견/);
 assert.match(module, /\[읽어주기\] 음성 목록 준비 중/);
@@ -36,8 +38,8 @@ assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
   assert.match(source, /DOMContentLoaded/);
   assert.match(source, /pageshow/);
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-10/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-10/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-11/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-11/);
 }
 assert.match(guide, /LanguageBrainReadAloud\?\.initialize\(\)/);
 
