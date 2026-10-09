@@ -3,4 +3,9 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
+User-agent: Yeti
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
 Sitemap: https://literacy-korea.com/sitemap.xml

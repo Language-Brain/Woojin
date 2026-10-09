@@ -31,6 +31,7 @@ assert.match(sitemap, /status=eq\.active&visibility=eq\.public/);
 assert.match(sitemap, /lastmod: latest\(posts\.filter\(post => post\.type === 'paper'\)\)/);
 assert.match(robots, /User-agent: \*\s+Allow: \/\s+Disallow: \/admin\s+Disallow: \/api\//);
 assert.match(robots, /Sitemap: https:\/\/literacy-korea\.com\/sitemap\.xml/);
+assert.match(robots, /User-agent: Yeti\s+Allow: \/\s+Disallow: \/admin\s+Disallow: \/api\//);
 assert.ok(home.includes('"@type":"WebSite","@id":"https://literacy-korea.com/#website","url":"https://literacy-korea.com/","name":"삶과 언어"'));
 assert.ok(vercel.redirects.some(rule => rule.source === '/:path*'
   && rule.destination === 'https://literacy-korea.com/:path*'
