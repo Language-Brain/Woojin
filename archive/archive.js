@@ -14,10 +14,10 @@
   }[kind];
   document.body.dataset.archiveKind=kind;
   const canonicalUrl=`https://literacy-korea.com/${kind}`;
-  document.title=`${settings.title} | 삶과 언어`;
+  document.title=`${settings.title} | 리터러시 톡톡`;
   document.querySelector('meta[name="description"]').content=settings.description;
   document.querySelector('#canonical').href=canonicalUrl;
-  document.querySelector('#og-title').content=`${settings.title} | 삶과 언어`;
+  document.querySelector('#og-title').content=`${settings.title} | 리터러시 톡톡`;
   document.querySelector('#og-description').content=settings.description;
   document.querySelector('#og-url').content=canonicalUrl;
   const $=s=>document.querySelector(s); const esc=v=>{const n=document.createElement('span');n.textContent=v??'';return n.innerHTML};

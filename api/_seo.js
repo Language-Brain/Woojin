@@ -1,5 +1,5 @@
 export const SITE_URL = 'https://literacy-korea.com';
-export const SITE_NAME = '삶과 언어 | 권우진 연구실';
+export const SITE_NAME = '리터러시 톡톡 | 삶과 언어 · 권우진 연구실';
 export const SITE_DESCRIPTION = '언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 논문·뉴스·연구 원고와 교육 자료를 소개하는 권우진의 연구 공간입니다.';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhaosgzyvoijgwryybry.supabase.co';

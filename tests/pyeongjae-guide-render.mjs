@@ -11,7 +11,7 @@ const response={setHeader:()=>{},status:n=>{status=n;return response},send:v=>{b
 await handler({query:{id:guideId}},response);
 global.fetch=originalFetch;
 assert.equal(status,200);
-for(const text of ['○ 『평재문집』의 구성과 수록 내용 | 삶과 언어','『평재문집』 · 안내 글','pyeongjae-guide-body','<strong>소개</strong>','<table>','https://example.com','https://encykorea.aks.ac.kr/Article/E0060050','data-public-linkify','/customer/public-links.js?v=20260914-1',`/pyeongjae-entry?id=${sourceId}`,'다음 자료 →','reader-text-content'])assert.ok(body.includes(text),text);
+for(const text of ['○ 『평재문집』의 구성과 수록 내용 | 리터러시 톡톡','『평재문집』 · 안내 글','pyeongjae-guide-body','<strong>소개</strong>','<table>','https://example.com','https://encykorea.aks.ac.kr/Article/E0060050','data-public-linkify','/customer/public-links.js?v=20260914-1',`/pyeongjae-entry?id=${sourceId}`,'다음 자료 →','reader-text-content'])assert.ok(body.includes(text),text);
 assert.ok(!body.includes('javascript:'));
 assert.ok(!body.includes('onclick="alert(1)"'));
 assert.ok(!body.includes('<script>alert(1)</script>'));

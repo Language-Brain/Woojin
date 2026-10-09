@@ -22,11 +22,12 @@ assert.match(css,/@media\(max-width:620px\)[\s\S]*\.compact-list-thumb\{width:96
 assert.doesNotMatch(admin,/목록 설명\(선택\)/);
 assert.match(admin,/<input id="post-excerpt" type="hidden">/);
 assert.match(js,/if\(!html\)\{[\s\S]*row\.excerpt,row\.subtitle,row\.description/,'saved descriptions are preserved only when the body is empty');
-assert.match(archive,/<a class="brand" href="\/">삶과 언어<\/a>/);
-assert.match(home,/<a class="brand" href="#top">삶과 언어<\/a>/);
-assert.match(home,/<title>삶과 언어 \| 권우진 연구실<\/title>/);
-assert.match(home,/© 2026 삶과 언어/);
-assert.match(articleApi,/og:site_name" content="삶과 언어"/);
+assert.match(archive,/<a class="brand" href="\/">리터러시 톡톡<\/a>/);
+assert.match(home,/<a class="brand" href="\/">리터러시 톡톡<\/a>/);
+assert.match(home,/<title>리터러시 톡톡 \| 삶과 언어 · 권우진 연구실<\/title>/);
+assert.match(home,/© 2026 권우진\. All rights reserved\./);
+assert.match(home,/이전 블로그에서 지난 글 읽기 ↗/);
+assert.match(articleApi,/og:site_name" content="리터러시 톡톡"/);
 assert.doesNotMatch(home,/<a class="brand"[^>]*>언어와 뇌<\/a>/);
 
 console.log('archive summaries, compact lists, and public brand: PASS');

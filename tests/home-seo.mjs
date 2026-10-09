@@ -13,18 +13,24 @@ const archiveEntries = Object.fromEntries(['papers', 'news', 'works', 'videos'].
 ]));
 const description = '언어와 삶, 문해교육, 읽기와 쓰기, 인지와 인간의 활동을 탐구하고 논문·뉴스·연구 원고와 교육 자료를 소개하는 권우진의 연구 공간입니다.';
 
-assert.match(home, /<title>삶과 언어 \| 권우진 연구실<\/title>/);
+assert.match(home, /<title>리터러시 톡톡 \| 삶과 언어 · 권우진 연구실<\/title>/);
 assert.ok(home.includes(`<meta name="description" content="${description}">`));
-assert.match(home, /<meta property="og:title" content="삶과 언어 \| 권우진 연구실">/);
+assert.match(home, /<meta property="og:title" content="리터러시 톡톡 \| 삶과 언어 · 권우진 연구실">/);
 assert.ok(home.includes(`<meta property="og:description" content="${description}">`));
-assert.match(home, /<meta name="twitter:title" content="삶과 언어 \| 권우진 연구실">/);
+assert.match(home, /<meta name="twitter:title" content="리터러시 톡톡 \| 삶과 언어 · 권우진 연구실">/);
 assert.ok(home.includes(`<meta name="twitter:description" content="${description}">`));
 assert.match(home, /<link rel="canonical" href="https:\/\/literacy-korea\.com\/">/);
 assert.match(home, /<meta name="naver-site-verification" content="f3c0499cc6b686df2535b94cdfd33b74d81a45e9">/);
 assert.match(home, /<meta name="naver-site-verification" content="123d5b88afda3b9f4a77584d58a2f81741670c68">/);
 assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest">/);
 assert.match(home, /<meta name="robots" content="index, follow, max-image-preview:large">/);
-assert.match(home, /"@type":"WebSite"[^}]*"name":"삶과 언어","alternateName":"권우진 연구실"/);
+assert.match(home, /"@type":"WebSite"[^}]*"name":"리터러시 톡톡","alternateName":"삶과 언어 · 권우진 연구실"/);
+assert.match(home, /<h1>삶과 언어<\/h1>/);
+assert.match(home, /<footer class="site-footer">[\s\S]*언어와 문해, 인지와 삶을 탐구하는 권우진의 연구 공간[\s\S]*literacy-korea\.com/);
+assert.match(home, /href="https:\/\/literacy-talktalk\.tistory\.com" target="_blank" rel="noopener noreferrer"/);
+assert.match(home, /src="\/customer\/previous-blog-watercolor\.png"[^>]*width="84" height="58"/);
+assert.match(home, /© 2026 권우진\. All rights reserved\.[\s\S]*href="\/admin">관리자<\/a>/);
+assert.match(home, /@media\(max-width:760px\)\{\.footer-main\{[^}]*flex-direction:column/);
 assert.match(seo, /post\.seo_description \|\| post\.excerpt \|\| meaningfulBodyText\(post\.content_html, post\)/);
 assert.match(seo, /return `\$\{sample\.slice\(0, cut\)\.trim\(\)\}…`/);
 assert.match(sitemap, /select=id,type,updated_at,published_at/);
@@ -34,7 +40,7 @@ assert.match(sitemap, /lastmod: latest\(posts\.filter\(post => post\.type === 'p
 assert.match(robots, /User-agent: \*\s+Allow: \/\s+Disallow: \/admin\s+Disallow: \/api\//);
 assert.match(robots, /Sitemap: https:\/\/literacy-korea\.com\/sitemap\.xml/);
 assert.match(robots, /User-agent: Yeti\s+Allow: \/\s+Disallow: \/admin\s+Disallow: \/api\//);
-assert.ok(home.includes('"@type":"WebSite","@id":"https://literacy-korea.com/#website","url":"https://literacy-korea.com/","name":"삶과 언어"'));
+assert.ok(home.includes('"@type":"WebSite","@id":"https://literacy-korea.com/#website","url":"https://literacy-korea.com/","name":"리터러시 톡톡"'));
 assert.ok(vercel.redirects.some(rule => rule.source === '/:path*'
   && rule.destination === 'https://literacy-korea.com/:path*'
   && rule.permanent === true
@@ -44,7 +50,7 @@ for (const [kind, html] of Object.entries(archiveEntries)) {
   assert.match(html, new RegExp(`<meta id="og-url" property="og:url" content="https:\\/\\/literacy-korea\\.com\\/${kind}">`));
 }
 assert.match(videoApi, /const canonical = `\$\{SITE_URL\}\/video\?id=\$\{encodeURIComponent\(video\.id\)\}`/);
-assert.match(videoApi, /property="og:site_name" content="삶과 언어"/);
+assert.match(videoApi, /property="og:site_name" content="리터러시 톡톡"/);
 assert.match(videoApi, /'@type':'VideoObject'/);
 assert.equal(descriptionFor({ seo_description: '별도 검색 설명', excerpt: '기존 설명', content_html: '<p>본문 설명입니다.</p>' }), '별도 검색 설명');
 assert.equal(descriptionFor({ content_html: '<h2>소제목</h2><p>이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다.</p><p>다음 문단입니다.</p>' }), '이 문장은 검색 설명에 사용할 첫 번째 의미 있는 본문 문단입니다. 다음 문단입니다.');
