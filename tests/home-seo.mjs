@@ -20,6 +20,8 @@ assert.ok(home.includes(`<meta property="og:description" content="${description}
 assert.match(home, /<meta name="twitter:title" content="삶과 언어 \| 권우진 연구실">/);
 assert.ok(home.includes(`<meta name="twitter:description" content="${description}">`));
 assert.match(home, /<link rel="canonical" href="https:\/\/literacy-korea\.com\/">/);
+assert.match(home, /<meta name="naver-site-verification" content="f3c0499cc6b686df2535b94cdfd33b74d81a45e9">/);
+assert.match(home, /<meta name="naver-site-verification" content="123d5b88afda3b9f4a77584d58a2f81741670c68">/);
 assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest">/);
 assert.match(home, /<meta name="robots" content="index, follow, max-image-preview:large">/);
 assert.match(home, /"@type":"WebSite"[^}]*"name":"삶과 언어","alternateName":"권우진 연구실"/);
