@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&display=swap");
+
+.brand,
+.site-header > a:first-child,
+.site-head .brand {
+  display: inline-flex !important;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap !important;
+}
+
+.brand::after,
+.site-header > a:first-child::after,
+.site-head .brand::after {
+  content: "Literacy Talk-Talk";
+  color: #8A837A;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 620px) {
+  .brand,
+  .site-header > a:first-child,
+  .site-head .brand { gap: 6px; }
+
+  .brand::after,
+  .site-header > a:first-child::after,
+  .site-head .brand::after { font-size: 11px; }
+}
