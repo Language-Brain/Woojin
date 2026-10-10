@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&display=swap");
 
 .brand,
 .site-header > a:first-child,
@@ -13,11 +13,11 @@
 .site-header > a:first-child::after,
 .site-head .brand::after {
   content: "Literacy Talk-Talk";
-  color: #8A837A;
-  font-family: "Cormorant Garamond", serif;
-  font-size: 13px;
+  color: #55514C;
+  font-family: "Libre Baskerville", serif;
+  font-size: 17px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
   text-transform: none;
@@ -30,5 +30,5 @@
 
   .brand::after,
   .site-header > a:first-child::after,
-  .site-head .brand::after { font-size: 11px; }
+  .site-head .brand::after { font-size: 14px; }
 }
