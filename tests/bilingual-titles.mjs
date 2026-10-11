@@ -13,10 +13,12 @@ assert.match(home, /font:700 45px/);
 assert.match(home, /font-size:14px/);
 assert.match(home, /font-size:31px/);
 assert.ok(
-  home.indexOf("heroLead.replaceChildren(makeHeroLine('문해(Literacy), 인지(Cognition), 한국어 교육(KSL, KFL)을')") <
+  home.indexOf("makeHeroLines('hero-copy-desktop',['문해(Literacy), 인지(Cognition), 한국어 교육(KSL, KFL)을'") <
   home.indexOf("heroDescription.replaceChildren(makeHeroLine('삶과 언어는 권우진이 언어와 삶, 문해교육,')"),
   'the literacy paragraph should precede the site introduction paragraph'
 );
+assert.match(home, /makeHeroLines\('hero-copy-mobile',\['문해\(Literacy\), 인지\(Cognition\), 한국어 교육','\(KSL, KFL\)을 포함한 여러 화두는 서로','연결되어 있습니다\.'\]\)/);
+assert.match(home, /\.hero h1::after\{color:#817C75;font-size:26px;white-space:nowrap\}/);
 assert.match(home, /\.hero \.hero-en,\.hero \.hero-ko\{width:auto;max-width:none;color:#686868;font:400 17px\/1\.58 var\(--sans\);letter-spacing:0\}/);
 assert.match(shared, /content: "Literacy Talk-Talk"/);
 assert.match(shared, /font-family: "Libre Baskerville", serif/);
