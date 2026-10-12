@@ -65,6 +65,16 @@ export async function supabaseRows(table, query) {
   return response.json();
 }
 
+export async function supabaseRpc(name, body) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) throw new Error(`Supabase RPC ${response.status}`);
+  return response.json();
+}
+
 export function xmlEscape(value) {
   return escapeHtml(value).replaceAll('&#39;', '&apos;');
 }

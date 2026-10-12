@@ -25,7 +25,7 @@
     { "source": "/video", "destination": "/api/video" },
     { "source": "/search", "destination": "/search/index.html" },
     { "source": "/guides", "destination": "/guides/index.html" },
-    { "source": "/guide", "destination": "/guide/index.html" },
+    { "source": "/guide", "destination": "/api/guide" },
     { "source": "/pyeongjae", "destination": "/pyeongjae/index.html" },
     { "source": "/pyeongjae-entry", "destination": "/api/pyeongjae" }
   ],
