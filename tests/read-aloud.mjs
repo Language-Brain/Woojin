@@ -13,12 +13,22 @@ const video = read('api/video.js');
 for (const marker of ['window.speechSynthesis', 'window.SpeechSynthesisUtterance', "utterance.lang='ko-KR'", 'getVoices']) {
   assert.ok(module.includes(marker), marker);
 }
-for (const label of ['🔊 읽어주기', '일시정지', '계속 듣기', '처음부터', '정지', '0.8배', '1.0배', '1.2배', '1.5배']) assert.ok(module.includes(label), label);
+for (const label of ['🔊 읽어주기', '일시정지', '계속 듣기', '이전 문단', '다음 문단', '처음부터', '정지', '0.8배', '1.0배', '1.2배', '1.5배', '문단부터 이어 들을 수 있습니다']) assert.ok(module.includes(label), label);
 for (const action of ['synth.pause()', 'synth.resume()', 'synth?.cancel()', "window.addEventListener('pagehide'"]) assert.ok(module.includes(action), action);
 assert.match(module, /DOMContentLoaded/);
 assert.match(module, /MutationObserver/);
 assert.match(module, /retryCount<20/);
 assert.match(module, /voiceschanged/);
+assert.match(module, /literacy-talktalk-read-aloud-v2/);
+assert.match(module, /STORE_TTL=90\*24\*60\*60\*1000/);
+assert.match(module, /STORE_LIMIT=30/);
+assert.match(module, /version:hash|version=hash/);
+assert.match(module, /paragraph:segments\[index\]/);
+assert.match(module, /resumeTimer=setTimeout/);
+assert.match(module, /음성 읽기가 중단되어 마지막 위치부터 다시 시작합니다/);
+assert.match(module, /visibilitychange/);
+assert.match(module, /읽기 시작 문단 선택/);
+assert.match(module, /<progress aria-label="본문 읽기 진행률"/);
 assert.match(module, /LanguageBrainReadAloud=\{initialize,refreshVoices\}/);
 assert.match(module, /document\.querySelector\('\.read-aloud-controls'\)/);
 assert.match(module, /observer\.disconnect\(\)/);
@@ -35,7 +45,8 @@ assert.match(pyeongjae, /page\.literal_translation,'literal-translation'/);
 assert.match(pyeongjae, /page\.interpretive_translation,'interpretive-translation'/);
 assert.match(module, /Google\|Microsoft\|Siri\|Samsung\|Natural\|Online/);
 assert.match(module, /reader-speaking/);
-assert.match(module, /script,style,noscript,img,svg,video,audio,iframe/);
+assert.match(module, /script,style,noscript,svg,video,audio,iframe/);
+assert.match(module, /querySelectorAll\('img'\)/);
 assert.match(module, /replace\(\/https\?:\\\/\\\/\\S\+\/gi/);
 assert.match(styles, /\.reader-speaking\{background:#e9f3ef/);
 assert.match(styles, /focus-visible/);
@@ -43,8 +54,8 @@ assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
   assert.match(source, /DOMContentLoaded/);
   assert.match(source, /pageshow/);
-  assert.match(source, /customer\/read-aloud\.js\?v=20261004-12/);
-  assert.match(source, /customer\/read-aloud\.css\?v=20261004-12/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261004-13/);
+  assert.match(source, /customer\/read-aloud\.css\?v=20261004-13/);
 }
 assert.match(guide, /LanguageBrainReadAloud\?\.initialize\(\)/);
 
