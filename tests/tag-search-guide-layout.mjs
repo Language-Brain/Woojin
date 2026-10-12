@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-const guide=fs.readFileSync(new URL('../guide/index.html',import.meta.url),'utf8');
+const guide=fs.readFileSync(new URL('../api/guide.js',import.meta.url),'utf8');
 const guideCss=fs.readFileSync(new URL('../guides/guides.css',import.meta.url),'utf8');
 const admin=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
 const article=fs.readFileSync(new URL('../api/article.js',import.meta.url),'utf8');
@@ -12,8 +12,7 @@ const vercel=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url
 assert.match(guideCss,/\.site-header\{height:66px/);
 assert.doesNotMatch(guideCss,/(^|})header\{height:66px/);
 assert.match(guide,/\.document-head\{display:block;width:100%;height:auto/);
-const headerMarkup='document-kicker\\">보조 자료실</p><h1></h1><p class=\\"meta\\"></p><div class=\\"tags\\"></div><p class=\\"summary';
-assert.ok(guide.includes(headerMarkup.replaceAll('\\\\"','"')) || /document-kicker.*?<h1><\/h1><p class="meta"><\/p><div class="tags"><\/div><p class="summary/s.test(guide));
+assert.match(guide,/document-kicker">보조 자료실<\/p><h1>\$\{escapeHtml\(row\.title\)\}<\/h1>/);
 assert.match(guide,/word-break:keep-all;overflow-wrap:break-word/);
 assert.match(admin,/const normalizeTags = value/);
 assert.match(admin,/replace\(\/\^#\+\\s\*\//);
@@ -31,5 +30,5 @@ assert.match(customer,/href="\/search">글 검색/);
 assert.ok(vercel.rewrites.some(row=>row.source==='/search'));
 assert.match(sitemap,/'\/search'/);
 new Function(admin);
-for(const page of [guide,search]){[...page.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(match=>match[1]).filter(code=>code.trim()).forEach(code=>new Function(code))}
+for(const page of [search]){[...page.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(match=>match[1]).filter(code=>code.trim()).forEach(code=>new Function(code))}
 console.log('tag search and guide layout: PASS');

@@ -33,7 +33,7 @@ test('the shared styles resize and reflow only reader text content', async () =>
 test('all public detail families load the shared controls and mark body-only content', async () => {
   const [article, guide, pyeongjae] = await Promise.all([
     read('api/article.js'),
-    read('guide/index.html'),
+    read('api/guide.js'),
     read('api/pyeongjae.js')
   ]);
   for (const source of [article, guide, pyeongjae]) {

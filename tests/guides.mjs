@@ -6,7 +6,7 @@ const adminCss=fs.readFileSync(new URL('../admin/admin.css',import.meta.url),'ut
 const adminJs=fs.readFileSync(new URL('../admin/admin.js',import.meta.url),'utf8');
 const search=fs.readFileSync(new URL('../guides/index.html',import.meta.url),'utf8');
 const searchJs=fs.readFileSync(new URL('../guides/guide-list.js',import.meta.url),'utf8');
-const detail=fs.readFileSync(new URL('../guide/index.html',import.meta.url),'utf8');
+const detail=fs.readFileSync(new URL('../api/guide.js',import.meta.url),'utf8');
 const migration=fs.readFileSync(new URL('../supabase/migrations/20260828_guides.sql',import.meta.url),'utf8');
 const vercel=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
 assert.ok(home.indexOf('<section class="guide-search-zone"')>home.indexOf('<section class="books-zone"'));
@@ -15,7 +15,7 @@ for(const value of ['문서를 찾아보세요','href="/guides">보조 자료실
 for(const value of ['title','description','body','course_name','institution_name','tags','visibility=eq.public','showError','retry-guides','pageshow',"scope = validScopes.has",'search();','pyeongjaeItem','face-row','face-meta'])assert.ok(searchJs.includes(value),value);
 assert.ok(search.includes('/pyeongjae/list-row.css'));
 assert.doesNotMatch(searchJs,/visibility=eq.unlisted/);
-for(const value of ['get_unlisted_guide','noopener noreferrer','navigator.share','/customer/public-view-count.js?v=20260917-2'])assert.ok(detail.includes(value),value);
+for(const value of ['get_unlisted_guide','noopener noreferrer','navigator.share','/customer/public-view-count.js?v=20260917-2','rel="canonical"',"'@type': 'Article'"])assert.ok(detail.includes(value),value);
 for(const value of ['data-view="guides"','id="guide-form"','id="guide-admin-search"','id="guide-admin-sort"'])assert.ok(admin.includes(value),value);
 assert.ok(adminCss.includes('.side-nav')&&adminCss.includes('overflow-y:auto'));
 for(const value of ['loadGuides','loadGuideTags','data-guide-action="trash"','data-guide-action="restore"','data-guide-action="delete"','guideTagEdit'])assert.ok(adminJs.includes(value),value);
@@ -25,5 +25,5 @@ assert.doesNotMatch(migration,/drop table|truncate/i);
 assert.ok(vercel.rewrites.some(x=>x.source==='/guides')&&vercel.rewrites.some(x=>x.source==='/guide'));
 new Function(adminJs);
 new Function(searchJs);
-for(const page of [home,search,detail])for(const match of page.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g))if(match[1].trim())new Function(match[1]);
+for(const page of [home,search])for(const match of page.matchAll(/<script(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g))if(match[1].trim())new Function(match[1]);
 console.log('guides: PASS');

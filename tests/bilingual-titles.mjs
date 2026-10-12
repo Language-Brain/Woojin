@@ -28,7 +28,7 @@ assert.match(shared, /white-space: nowrap !important/);
 
 for (const relative of [
   '../archive/index.html', '../archive/news.html', '../archive/works.html', '../archive/videos.html',
-  '../guides/index.html', '../guide/index.html', '../pyeongjae/index.html', '../search/index.html',
+  '../guides/index.html', '../api/guide.js', '../pyeongjae/index.html', '../search/index.html',
   '../api/article-template.js', '../api/pyeongjae.js', '../api/video.js'
 ]) {
   const source = await readFile(new URL(relative, import.meta.url), 'utf8');

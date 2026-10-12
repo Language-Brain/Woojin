@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const links=fs.readFileSync(new URL('../customer/public-links.js',import.meta.url),'utf8');
 const article=fs.readFileSync(new URL('../api/article.js',import.meta.url),'utf8');
-const guide=fs.readFileSync(new URL('../guide/index.html',import.meta.url),'utf8');
+const guide=fs.readFileSync(new URL('../api/guide.js',import.meta.url),'utf8');
 const pyeongjae=fs.readFileSync(new URL('../api/pyeongjae.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../pyeongjae/pyeongjae.css',import.meta.url),'utf8');
 

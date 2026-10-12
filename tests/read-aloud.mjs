@@ -6,7 +6,7 @@ const module = read('customer/read-aloud.js');
 const styles = read('customer/read-aloud.css');
 const links = read('customer/public-links.js');
 const article = read('api/article.js');
-const guide = read('guide/index.html');
+const guide = read('api/guide.js');
 const pyeongjae = read('api/pyeongjae.js');
 const video = read('api/video.js');
 
