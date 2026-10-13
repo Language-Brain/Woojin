@@ -27,6 +27,9 @@ for(const source of [article,guide,pyeongjae,video]){
 }
 assert.match(article,/post\.type === 'paper' \? '\/papers'/);
 assert.match(articleTemplate,/\.share-button\{display:inline-flex;width:112px/);
+assert.match(articleTemplate,/shareMarkup=data=>/);
+assert.match(articleTemplate,/data-list-return data-list-fallback/);
+assert.match(module,/MutationObserver\(bind\)/);
 assert.match(guide,/data-list-fallback="\/guides"/);
 assert.match(pyeongjae,/data-list-fallback="\/pyeongjae"/);
 assert.match(video,/data-list-fallback="\/videos"/);
