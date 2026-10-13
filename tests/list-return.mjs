@@ -16,12 +16,13 @@ assert.match(module,/origin===location\.origin&&LIST_PATHS\.has/);
 assert.match(module,/DETAIL_PATHS\.has/);
 assert.match(module,/sessionStorage\.setItem\(CONTEXT_KEY/);
 assert.match(module,/scrollY:window\.scrollY/);
-assert.match(module,/navigation!=='reload'\)history\.back\(\);else location\.assign\(target\)/);
+assert.match(module,/location\.assign\(target\)/);
+assert.doesNotMatch(module,/history\.back\(\)/);
 assert.match(module,/setTimeout\(restore,800\)/);
 assert.doesNotMatch(module,/localStorage/);
 for(const source of [article,guide,pyeongjae,video]){
   assert.match(source,/data-list-return/);
-  assert.match(source,/customer\/list-return\.js\?v=20261013-1/);
+  assert.match(source,/customer\/list-return\.js\?v=20261013-2/);
   assert.match(source,/공유하기/);
   assert.match(source,/목록 보기/);
 }
@@ -37,6 +38,6 @@ assert.match(archive,/params\.get\('q'\)\?\?savedState\.q/);
 assert.match(archive,/saveState\(true\)/);
 assert.match(pyeongjaeList,/params\.get\('page'\)/);
 assert.match(pyeongjaeList,/next\.searchParams\.set\('page'/);
-for(const page of ['archive/index.html','archive/news.html','archive/works.html','archive/videos.html','guides/index.html','pyeongjae/index.html','search/index.html','customer/index.html'])assert.match(read(page),/customer\/list-return\.js\?v=20261013-1/,page);
+for(const page of ['archive/index.html','archive/news.html','archive/works.html','archive/videos.html','guides/index.html','pyeongjae/index.html','search/index.html','customer/index.html'])assert.match(read(page),/customer\/list-return\.js\?v=20261013-2/,page);
 
 console.log('safe list return controls: PASS');

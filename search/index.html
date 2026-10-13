@@ -23,5 +23,5 @@
   async function search(){const term=input.value.trim();document.querySelector('#guide-search-link').href='/guides'+(term?'?q='+encodeURIComponent(term):'');if(!term){count.textContent='';return}list.innerHTML='<p class="empty">찾고 있습니다.</p>';const{data,error}=await db.from('posts').select('id,type,title,excerpt,content_html,tags,published_at,updated_at').eq('status','published').in('type',['paper','news','works']).order('published_at',{ascending:false}).limit(500);if(error){list.innerHTML='<p class="empty">검색하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';return}const needle=term.toLocaleLowerCase('ko-KR'),rows=(data||[]).filter(row=>[row.title,row.excerpt,text(row.content_html),...(Array.isArray(row.tags)?row.tags:[])].join(' ').toLocaleLowerCase('ko-KR').includes(needle));count.textContent=rows.length+'건';list.replaceChildren(...(rows.length?rows.map(card):[Object.assign(document.createElement('p'),{className:'empty',textContent:'조건에 맞는 주요 글이 없습니다.'})]))}
   document.querySelector('#post-search').addEventListener('submit',event=>{event.preventDefault();location.href='/search?q='+encodeURIComponent(input.value.trim())});if(input.value)search();})();
   </script>
-  <script src="/customer/list-return.js?v=20261013-1"></script>
+  <script src="/customer/list-return.js?v=20261013-2"></script>
 </body></html>
