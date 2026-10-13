@@ -25,7 +25,7 @@
   let savedState={};
   try{savedState=JSON.parse(sessionStorage.getItem(stateKey)||'{}')}catch(_error){savedState={}}
   const params=new URLSearchParams(location.search);
-  let rows=[],visible=kind==='works'?Math.max(12,Number(savedState.visible)||12):12;
+  let rows=[],visible=Math.max(12,Number(savedState.visible)||12);
   $('#archive-title').textContent=settings.title; $('#eyebrow').textContent=settings.eyebrow; $('#archive-description').textContent=settings.description;
   $('#search').placeholder='키워드 검색';
   const date=v=>{if(!v)return '날짜 없음';const raw=String(v),parsed=new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw)?`${raw}T00:00:00`:raw);return Number.isNaN(parsed.getTime())?'날짜 없음':parsed.toLocaleDateString('ko-KR')};
@@ -86,7 +86,6 @@
     return `<article class="archive-card">${row.image_url?`<a href="${detailUrl(row)}"><img class="card-image" src="${esc(row.image_url)}" alt="${esc(row.image_alt||row.title)}" loading="lazy"></a>`:''}<span class="card-kicker">${esc(row.category||settings.title)}</span><h2><a href="${detailUrl(row)}">${esc(row.title)}</a></h2><p class="card-meta">${esc(meta)}</p><p class="card-summary">${esc(row.excerpt||row.subtitle||'상세 내용을 준비하고 있습니다.')}</p><div class="card-actions"><a href="${detailUrl(row)}">자세히 보기 →</a>${external}</div></article>`;
   }
   function saveState(includeScroll=false){
-    if(kind!=='works') return;
     const state={q:$('#search').value,visible,scrollY:includeScroll?window.scrollY:(savedState.scrollY||0)};
     sessionStorage.setItem(stateKey,JSON.stringify(state)); savedState=state;
     const url=new URL(location.href); url.searchParams.delete('q');
@@ -107,11 +106,11 @@
     else result=await db.from('posts').select('*').eq('status','published').eq('type',settings.type);
     if(result.error){$('#empty').hidden=false;$('#empty').textContent='자료를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';return}
     rows=(result.data||[]).map(row=>({...row,_listSummary:listSummary(row),_searchText:[row.title,row.subtitle,row.excerpt,row.description,row.content_html,row.content,row.tags,row.authors,row.original_title,row.category,row.source,row.publisher].flat().map(plainText).join(' ').toLocaleLowerCase('ko-KR')}));
-    if(kind==='works')$('#search').value=params.get('q')??savedState.q??'';
+    $('#search').value=params.get('q')??savedState.q??'';
     render();
-    if(kind==='works'&&savedState.scrollY)requestAnimationFrame(()=>window.scrollTo({top:Number(savedState.scrollY)||0,behavior:'auto'}));
+    if(savedState.scrollY)requestAnimationFrame(()=>window.scrollTo({top:Number(savedState.scrollY)||0,behavior:'auto'}));
   }
   $('#search').addEventListener('input',()=>{visible=12;render()}); $('#clear-search').addEventListener('click',()=>{$('#search').value='';visible=12;render();$('#search').focus()}); $('#load-more').addEventListener('click',()=>{visible+=12;render()});
-  if(kind==='works'){document.addEventListener('click',event=>{if(event.target.closest('.works-list-row'))saveState(true)});window.addEventListener('pagehide',()=>saveState(true))}
+  document.addEventListener('click',event=>{if(event.target.closest('a[href*="/article?id="],a[href*="/video?id="]'))saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
   load();
 })();

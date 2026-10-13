@@ -11,7 +11,7 @@
   let genre = params.get('genre') || '';
   let recommended = params.get('recommended') === '1';
   if (genre || recommended) book = '';
-  let page = 1;
+  let page = Math.max(1, Number(params.get('page')) || 1);
   query.value = params.get('q') || '';
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -43,6 +43,7 @@
     book ? next.searchParams.set('book', book) : next.searchParams.delete('book');
     genre ? next.searchParams.set('genre', genre) : next.searchParams.delete('genre');
     recommended ? next.searchParams.set('recommended', '1') : next.searchParams.delete('recommended');
+    page > 1 ? next.searchParams.set('page', String(page)) : next.searchParams.delete('page');
     history.replaceState({ book, genre, recommended, q: query.value.trim() }, '', next);
   }
 
