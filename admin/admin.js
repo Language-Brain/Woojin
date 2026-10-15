@@ -7,6 +7,9 @@
     siteUrl: 'https://literacy-korea.com'
   };
   const recoveryRequested = /(?:[?#&]type=recovery)/.test(location.href);
+  const initialAdminParams = new URLSearchParams(location.search);
+  const newPostRequested = initialAdminParams.get('new') === '1';
+  const requestedEditId = initialAdminParams.get('edit') || '';
   const config = window.LANGUAGE_BRAIN_CONFIG?.supabaseUrl && window.LANGUAGE_BRAIN_CONFIG?.supabasePublishableKey ? window.LANGUAGE_BRAIN_CONFIG : fallback;
   const db = window.supabase?.createClient(config.supabaseUrl, config.supabasePublishableKey);
   const $ = selector => document.querySelector(selector);
@@ -131,7 +134,15 @@
     $('#account-email').textContent = currentUser.email;
     await Promise.all([loadCategories(), loadPosts(), loadMedia(), loadViews(), loadInquiries(), loadVideos(), loadBooks(), loadGuides(), loadGuideTags(), loadPyeongjae()]);
     renderDashboard();
-    navigate('dashboard');
+    if (newPostRequested) {
+      resetEditor();
+      navigate('editor');
+      requestAnimationFrame(() => $('#post-title')?.focus());
+    } else if (requestedEditId && allPosts.some(post => post.id === requestedEditId)) {
+      openEditor(requestedEditId, false);
+    } else {
+      navigate('dashboard');
+    }
   }
 
   $('#login-form').addEventListener('submit', async event => {
@@ -254,6 +265,9 @@
   });
 
   function navigate(view) {
+    if (view !== 'editor' && (location.search.includes('new=1') || location.search.includes('edit='))) {
+      history.replaceState(null, '', '/admin');
+    }
     $$('.view').forEach(section => section.classList.toggle('active-view', section.dataset.viewSection === view));
     $$('.nav-item').forEach(button => {
       const selectedType = view === 'posts' ? $('#filter-type')?.value : '';
@@ -277,13 +291,16 @@
 
   function startNewPost() {
     if (dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 새 글 작성을 시작할까요?')) return false;
-    resetEditor();
-    navigate('editor');
+    editorSession += 1;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
+    dirty = false;
+    location.assign('/admin?new=1');
     return true;
   }
 
-  $$('.nav-item').forEach(button => button.addEventListener('click', () => {
-    if (button.dataset.view === 'editor') { startNewPost(); return; }
+  $$('.nav-item').forEach(button => button.addEventListener('click', event => {
+    if (button.dataset.view === 'editor') { event.preventDefault(); startNewPost(); return; }
     if (dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 다른 화면으로 이동할까요?')) return;
     if (button.dataset.postType) $('#filter-type').value = button.dataset.postType;
     else if (button.dataset.view === 'posts') $('#filter-type').value = 'all';
@@ -693,10 +710,12 @@
       dirty = false;
       await Promise.all([loadPosts(), loadMedia()]);
       const savedAt = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-      setSaveState(`${savedAt} 저장 완료`, 'saved');
+      history.replaceState(null, '', `/admin?edit=${encodeURIComponent(id)}`);
+      const draftSaved = mode !== 'publish' && result.data.status !== 'published';
+      setSaveState(draftSaved ? `${savedAt} 임시 저장되었습니다` : `${savedAt} 저장 완료`, 'saved');
       updateEditorStatus(result.data);
       if (mode === 'publish') showToast('공개했습니다. 홈페이지에서 확인할 수 있습니다.');
-      else if (mode !== 'autosave') showToast(result.data.status === 'published' ? '편집 초안을 저장했습니다. 공개본은 유지됩니다.' : '임시 저장했습니다.');
+      else if (mode !== 'autosave') showToast(result.data.status === 'published' ? '편집 초안을 저장했습니다. 공개본은 유지됩니다.' : `${savedAt} 임시 저장되었습니다.`);
     } catch (error) {
       setSaveState('저장 실패', 'error');
       if (mode !== 'autosave') showToast(error?.code === '23505' ? '자료 번호가 겹쳐 저장하지 못했습니다. 잠시 후 다시 저장해 주세요. 편집 내용은 그대로 유지됩니다.' : `저장하지 못했습니다: ${error.message}`, true);
@@ -794,9 +813,10 @@
     };
   }
 
-  function openEditor(id) {
+  function openEditor(id, updateUrl = true) {
     const post = allPosts.find(row => row.id === id);
     if (!post) return;
+    if (updateUrl) history.replaceState(null, '', `/admin?edit=${encodeURIComponent(id)}`);
     editorSession += 1;
     clearTimeout(autosaveTimer);
     autosaveTimer = null;
@@ -980,7 +1000,7 @@
     const rows = filteredPosts();
     $('#post-count').textContent = rows.length ? (rows.length + '건') : '';
     const visible = rows.slice(0, visiblePostLimit);
-    $('#post-table-body').innerHTML = visible.map(post => `<tr><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '비공개·임시' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(post.status === 'draft' ? '임시 저장' : statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
   }
