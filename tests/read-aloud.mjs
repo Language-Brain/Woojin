@@ -30,8 +30,10 @@ assert.match(module, /Korean\|한국어/);
 assert.match(module, /if\(selected\)utterance\.voice=selected/);
 assert.doesNotMatch(module, /if\(!voice\(\)\)return/);
 assert.match(module, /literacy-talktalk-read-aloud-v2/);
-assert.match(module, /function stop\(update=true\)\{desiredMode='stopped';interruptedAt=0;cancelEngine\(\);index=0;persist\(false\);if\(update\)setState\('ready'\)\}/);
+assert.match(module, /RATE_KEY='literacy-talktalk-read-aloud-rate'/);
+assert.match(module, /function stop\(update=true\)\{desiredMode='stopped';interruptedAt=0;cancelEngine\(\);index=0;storeRate\(\);resetSaved\(\);if\(update\)setState\('ready'\)\}/);
 assert.doesNotMatch(module, /function stop\(update=true\)\{desiredMode='stopped';persist\(\)/);
+assert.match(module, /speed\.addEventListener\('change',\(\)=>\{rate=Number\(speed\.value\)\|\|1;storeRate\(\);persist\(\)/);
 assert.match(module, /STORE_TTL=90\*24\*60\*60\*1000/);
 assert.match(module, /STORE_LIMIT=30/);
 assert.match(module, /version:hash|version=hash/);
@@ -70,7 +72,7 @@ assert.doesNotMatch(links, /read-aloud/);
 for (const source of [article, guide, pyeongjae, video]) {
   assert.match(source, /DOMContentLoaded/);
   assert.match(source, /pageshow/);
-  assert.match(source, /customer\/read-aloud\.js\?v=20261013-15/);
+  assert.match(source, /customer\/read-aloud\.js\?v=20261015-16/);
   assert.match(source, /customer\/read-aloud\.css\?v=20261013-15/);
 }
 assert.match(guide, /LanguageBrainReadAloud\?\.initialize\(\)/);
