@@ -6,7 +6,7 @@ const css=fs.readFileSync(new URL('../admin/admin.css',import.meta.url),'utf8');
 for(const id of ['new-pyeongjae','pyeongjae-form','pj-source-fields','pj-guide-content','pj-guide-editor','pj-book','pj-sheet','pj-side','pj-volume','pj-genre','pj-title','pj-free-title','pj-custom-title','pj-page-editor','pj-preview'])assert.ok(html.includes('id="'+id+'"'),id);
 for(const choice of ['name="pj-entry-kind" value="source"','name="pj-entry-kind" value="guide"'])assert.ok(html.includes(choice),choice);
 for(const removed of ['id="pj-summary"','id="pj-people"','id="pj-places"','id="pj-work-title"','id="pj-review"'])assert.ok(!html.includes(removed),removed);
-assert.ok(html.includes('admin.css?v=pyeongjae-face-mobile-20260828-4'));
+assert.match(html,/admin\.css\?v=[a-z0-9-]+/i);
 for(const text of ["$('#new-pyeongjae')?.addEventListener('click'",'function pjRenderPage(){const box=',"$('#pyeongjae-form').classList.remove('hidden')",'const pjAutoTitle','pj-free-title','pjDuplicateWarning','function pjUpdateMode','entry_kind'])assert.ok(js.includes(text),text);
 for(const rule of ['.pj-title-maker','.pj-text-section','font-size:18px','@media(max-width:820px)','grid-template-columns:repeat(6,minmax(0,1fr))'])assert.ok(css.includes(rule),rule);
 new Function(js);

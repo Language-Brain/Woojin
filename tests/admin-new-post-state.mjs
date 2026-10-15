@@ -6,7 +6,7 @@ const html = await readFile(new URL('../admin/index.html', import.meta.url), 'ut
 
 assert.match(source, /let editorSession = 0/);
 assert.match(html, /<a class="nav-item" data-view="editor" data-new-post href="\/admin\?new=1">/);
-assert.match(html, /admin\.js\?v=admin-new-post-draft-20261015-1/);
+assert.match(html, /admin\.js\?v=dashboard-drafts-20261015-1/);
 assert.match(source, /const newPostRequested = initialAdminParams\.get\('new'\) === '1'/);
 assert.match(source, /if \(newPostRequested\)[\s\S]*?resetEditor\(\);[\s\S]*?navigate\('editor'\);[\s\S]*?post-title/);
 assert.match(source, /function startNewPost\(\)[\s\S]*?editorSession \+= 1;[\s\S]*?location\.assign\('\/admin\?new=1'\)/);

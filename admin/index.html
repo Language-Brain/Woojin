@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>언어와 문해 연구실 | 관리자 작업실</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
-  <link rel="stylesheet" href="/admin/admin.css?v=pyeongjae-face-mobile-20260828-4">
+  <link rel="stylesheet" href="/admin/admin.css?v=dashboard-drafts-20261015-1">
   <style>.paper-simple-fields textarea{min-height:118px;line-height:1.75}.paper-simple-fields small{display:block;margin-top:6px;color:var(--muted);line-height:1.55}.optional{font-size:11px;color:var(--muted);font-weight:500}</style>
 </head>
 <body>
@@ -70,6 +70,7 @@
       <section id="view-dashboard" class="view active-view" data-view-section="dashboard">
         <header class="page-head"><div><p class="eyebrow">운영 현황</p><h1>관리자 홈</h1><p>연구 아카이브의 글과 최근 활동을 한눈에 확인합니다.</p></div><button class="button primary" data-open-editor type="button">새 글 쓰기</button></header>
         <div id="summary-cards" class="summary-grid" aria-live="polite"></div>
+        <button id="dashboard-draft-notice" class="dashboard-draft-notice hidden" type="button"></button>
         <div class="dashboard-grid">
           <article class="panel"><div class="panel-head"><h2>최근 수정한 글</h2><button class="text-button" data-go="posts" type="button">전체 보기 →</button></div><div id="recent-updated" class="compact-list"></div></article>
           <article class="panel"><div class="panel-head"><h2>최근 공개한 글</h2></div><div id="recent-published" class="compact-list"></div></article>
@@ -201,7 +202,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-  <script src="/admin/admin.js?v=admin-new-post-draft-20261015-1"></script>
+  <script src="/admin/admin.js?v=dashboard-drafts-20261015-1"></script>
   <script src="/admin/pyeongjae-list-enhancements.js?v=pyeongjae-recommended-20260916-1"></script>
 </body>
 </html>

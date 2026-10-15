@@ -1048,14 +1048,21 @@
   function renderDashboard() {
     if (!$('#summary-cards')) return;
     const active = allPosts.filter(post => post.status !== 'trashed');
+    const drafts = active.filter(post => post.status === 'draft');
     const cards = [
       ['전체 글', active.length, '휴지통 제외'],
       ['공개 글', active.filter(post => post.status === 'published').length, '방문자에게 보임'],
-      ['비공개·임시', active.filter(post => post.status === 'draft').length, '관리자만 확인'],
+      ['비공개·임시', drafts.length, '관리자만 확인'],
       ['휴지통', allPosts.filter(post => post.status === 'trashed').length, '눌러서 확인·복구', 'trash']
     ];
     $('#summary-cards').innerHTML = cards.map(([label, value, note, action]) => action ? `<button class="summary-card summary-card-button" data-dashboard-action="${action}" type="button"><span>${label}</span><strong>${value}</strong><small>${note}</small></button>` : `<article class="summary-card"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
-    renderCompact('#recent-updated', [...active].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 5));
+    const draftNotice = $('#dashboard-draft-notice');
+    draftNotice.textContent = drafts.length ? `작성 중인 임시 저장 글이 ${drafts.length}건 있습니다.` : '';
+    draftNotice.classList.toggle('hidden', drafts.length === 0);
+    draftNotice.dataset.draftId = drafts.length === 1 ? drafts[0].id : '';
+    const recent = [...active].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    const recentWithDrafts = [...drafts, ...recent.filter(post => post.status !== 'draft')].slice(0, Math.max(5, drafts.length));
+    renderCompact('#recent-updated', recentWithDrafts);
     renderCompact('#recent-published', active.filter(post => post.status === 'published').sort((a, b) => String(b.published_at).localeCompare(String(a.published_at))).slice(0, 5));
     const counts = categories.map(category => ({ name: category.name, count: active.filter(post => post.category === category.name).length }));
     const max = Math.max(1, ...counts.map(row => row.count));
@@ -1070,8 +1077,20 @@
     $('#post-search').value = ''; $('#filter-type').value = 'all'; $('#filter-category').value = 'all'; $('#filter-status').value = 'trashed'; visiblePostLimit = 20; navigate('posts'); renderPostTable();
   });
 
+  $('#dashboard-draft-notice').addEventListener('click', event => {
+    const draftId = event.currentTarget.dataset.draftId;
+    if (draftId) return openEditor(draftId);
+    $('#post-search').value = '';
+    $('#filter-type').value = 'all';
+    $('#filter-category').value = 'all';
+    $('#filter-status').value = 'draft';
+    visiblePostLimit = 20;
+    navigate('posts');
+    renderPostTable();
+  });
+
   function renderCompact(selector, rows) {
-    $(selector).innerHTML = rows.length ? rows.map(post => `<div class="compact-item"><button data-edit-post="${post.id}" type="button">${escapeText(post.title)}</button><span>${escapeText(formatDate(post.updated_at))}</span></div>`).join('') : '<div class="empty-state small">표시할 글이 없습니다.</div>';
+    $(selector).innerHTML = rows.length ? rows.map(post => `<div class="compact-item ${post.status === 'draft' ? 'post-row-draft' : ''}"><button data-edit-post="${post.id}" type="button">${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span>${escapeText(formatDate(post.updated_at))}</span></div>`).join('') : '<div class="empty-state small">표시할 글이 없습니다.</div>';
     $$(`${selector} [data-edit-post]`).forEach(button => button.addEventListener('click', () => openEditor(button.dataset.editPost)));
   }
 
