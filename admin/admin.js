@@ -1186,9 +1186,15 @@
     const cards = [['오늘 조회수', viewRows.filter(row => row.viewed_on === todayValue).length], ['최근 7일', viewRows.filter(row => row.viewed_on >= seven).length], ['누적 조회수', viewRows.length], ['조회된 글', new Set(viewRows.map(row => row.post_id)).size]];
     $('#stats-cards').innerHTML = cards.map(([label, value]) => `<article class="summary-card"><span>${label}</span><strong>${value}</strong><small>${value ? '실제 수집값' : '아직 수집된 통계 없음'}</small></article>`).join('');
     const counts = viewRows.reduce((map, row) => map.set(row.post_id, (map.get(row.post_id) || 0) + 1), new Map());
-    const popular = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-    $('#popular-posts').innerHTML = popular.length ? popular.map(([id, count]) => { const post = allPosts.find(row => row.id === id); return `<div class="compact-item"><button data-edit-post="${id}" type="button">${escapeText(post?.title || '삭제된 글')}</button><span>${count}회</span></div>`; }).join('') : '<div class="empty-state small">아직 수집된 통계가 없습니다.</div>';
-    $$('#popular-posts [data-edit-post]').forEach(button => button.addEventListener('click', () => openEditor(button.dataset.editPost)));
+    const popular = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+    $('#popular-posts').innerHTML = popular.length ? popular.map(([id, count], index) => {
+      const post = allPosts.find(row => row.id === id);
+      const title = escapeText(post?.title || '삭제된 글');
+      const titleMarkup = post?.status === 'published'
+        ? `<a class="popular-title" href="/article?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${title}</a>`
+        : `<span class="popular-title">${title}</span>`;
+      return `<div class="popular-item"><span class="popular-rank">${index + 1}</span>${titleMarkup}<span class="popular-count">조회 ${Number(count).toLocaleString('ko-KR')}</span></div>`;
+    }).join('') : '<div class="empty-state small">아직 수집된 통계가 없습니다.</div>';
   }
 
   const inquiryKindLabels = { lecture: '강의 문의', question: '질문 제안' };
