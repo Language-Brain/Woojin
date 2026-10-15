@@ -45,6 +45,7 @@
   let dirty = false;
   let saving = false;
   let autosaveTimer = null;
+  let editorSession = 0;
   let visiblePostLimit = 20;
   let toastTimer = null;
   let passwordRecoveryMode = recoveryRequested;
@@ -274,14 +275,22 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function startNewPost() {
+    if (dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 새 글 작성을 시작할까요?')) return false;
+    resetEditor();
+    navigate('editor');
+    return true;
+  }
+
   $$('.nav-item').forEach(button => button.addEventListener('click', () => {
-    if (dirty && button.dataset.view !== 'editor' && !confirm('저장하지 않은 변경 내용이 있습니다. 다른 화면으로 이동할까요?')) return;
+    if (button.dataset.view === 'editor') { startNewPost(); return; }
+    if (dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 다른 화면으로 이동할까요?')) return;
     if (button.dataset.postType) $('#filter-type').value = button.dataset.postType;
     else if (button.dataset.view === 'posts') $('#filter-type').value = 'all';
     navigate(button.dataset.view);
   }));
   $$('[data-go]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.go)));
-  $$('[data-open-editor]').forEach(button => button.addEventListener('click', () => { resetEditor(); navigate('editor'); }));
+  $$('[data-open-editor]').forEach(button => button.addEventListener('click', startNewPost));
   $('#menu-toggle').addEventListener('click', () => {
     const open = $('#sidebar').classList.toggle('open');
     $('#menu-toggle').setAttribute('aria-expanded', String(open));
@@ -612,6 +621,7 @@
 
   async function savePost(mode = 'draft') {
     if (saving) return;
+    const session = editorSession;
     let working;
     try { working = collectWorking(); }
     catch (error) { if (mode !== 'autosave') showToast(error.message, true); setSaveState('입력 확인 필요', 'error'); return; }
@@ -638,6 +648,7 @@
         if (!pending.file) continue;
         const fingerprint = [pending.file.name, pending.file.size, pending.file.type, pending.file.lastModified].join(':');
         const uploaded = uploadedByFingerprint.get(fingerprint) || await uploadImage(pending.file, pending.alt);
+        if (session !== editorSession) return;
         uploadedByFingerprint.set(fingerprint, uploaded);
         const key = pending.slot === 2 ? 'image_url_2' : 'image_url';
         const suffix = pending.slot === 2 ? '-2' : '';
@@ -648,12 +659,15 @@
         $(`#post-image${suffix}`).value = '';
         setFeaturedPreview(pending.slot, uploaded.publicUrl, pending.alt);
       }
+      if (session !== editorSession) return;
       let id = $('#post-id').value;
       const existing = id ? (allPosts.find(post => post.id === id) || currentPost) : null;
       const canonicalWrite = !(id && existing?.status === 'published' && mode !== 'publish');
       if (canonicalWrite) {
         const storageType = working.type || 'other';
-        $('#post-ref').value = await resolveRefNo(storageType, $('#post-ref').value, id);
+        const refNo = await resolveRefNo(storageType, $('#post-ref').value, id);
+        if (session !== editorSession) return;
+        $('#post-ref').value = refNo;
       }
       const writePost = async () => {
         if (id) {
@@ -666,10 +680,13 @@
       };
       let result = await writePost();
       if (result.error?.code === '23505' && canonicalWrite) {
-        $('#post-ref').value = await resolveRefNo(working.type || 'other', '', id);
+        const refNo = await resolveRefNo(working.type || 'other', '', id);
+        if (session !== editorSession) return;
+        $('#post-ref').value = refNo;
         result = await writePost();
       }
       if (result.error) throw result.error;
+      if (session !== editorSession) return;
       id = result.data?.id || id;
       $('#post-id').value = id;
       currentPost = result.data;
@@ -703,6 +720,9 @@
   });
 
   function resetEditor() {
+    editorSession += 1;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
     currentPost = null;
     featuredFile = null;
     featuredFile2 = null;
@@ -715,7 +735,11 @@
     $('#post-category').value = '';
     $('#post-home-featured').checked = true;
     $('#post-home-order').value = '0';
-    quill?.setContents([]);
+    if (quill) {
+      quill.setContents([], 'silent');
+      quill.history.clear();
+      quill.setSelection(0, 0, 'silent');
+    }
     setFeaturedPreview(1, '');
     setFeaturedPreview(2, '');
     renderRecommendations([]);
@@ -723,6 +747,7 @@
     $('#current-status').textContent = '새 글';
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
     $('#unpublish-post').classList.add('hidden');
+    $('#publish-post').textContent = '공개하기';
     updateResearchFields();
     dirty = false;
     setSaveState('저장 준비');
@@ -772,6 +797,9 @@
   function openEditor(id) {
     const post = allPosts.find(row => row.id === id);
     if (!post) return;
+    editorSession += 1;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
     currentPost = post;
     featuredFile = null;
     featuredFile2 = null;
@@ -810,6 +838,8 @@
     $('#post-full-text-url').value = working.full_text_url;
     $('#post-ref').value = post.ref_no;
     quill.clipboard.dangerouslyPasteHTML(DOMPurify.sanitize(working.content_html || ''));
+    quill.history.clear();
+    quill.setSelection(0, 0, 'silent');
     setFeaturedPreview(1, working.image_url, working.image_alt);
     setFeaturedPreview(2, working.image_url_2, working.image_alt_2);
     renderRecommendations(working.recommended_posts);
