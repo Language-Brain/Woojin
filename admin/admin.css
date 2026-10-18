@@ -116,3 +116,5 @@
 .pj-admin-pagination button{min-width:38px;height:38px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 .pj-admin-pagination button.active{background:#286d68;color:#fff;border-color:#286d68}
 @media(max-width:620px){.pj-admin-book-tabs{scrollbar-width:thin}.pj-admin-book-tabs button{min-width:72px;font-size:14px}.pj-admin-pagebar{align-items:flex-start;flex-direction:column}.pj-admin-pagination{width:100%;justify-content:center}}
+.editor-trash-card{border-color:#ead7d7}.editor-trash-card p{font-size:12px;color:var(--muted)}.editor-trash-card .button{width:100%}
+.confirm-dialog{width:min(520px,calc(100% - 32px));border:1px solid var(--line);border-radius:8px;padding:0;box-shadow:0 20px 60px rgba(20,31,45,.22)}.confirm-dialog::backdrop{background:rgba(18,28,40,.46)}.confirm-dialog form{padding:24px}.confirm-dialog p{margin:0 0 22px;line-height:1.7}.confirm-dialog .button-row{justify-content:flex-end}

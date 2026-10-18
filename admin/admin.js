@@ -727,6 +727,8 @@
 
   $('#save-draft').addEventListener('click', () => savePost('draft'));
   $('#publish-post').addEventListener('click', () => savePost('publish'));
+  const statusCard = document.querySelector('.status-card');
+  statusCard.insertAdjacentHTML('afterend', '<div id="editor-trash-card" class="meta-card editor-trash-card hidden"><h2>글 정리</h2><p>저장된 글은 휴지통에서 다시 복구할 수 있습니다.</p><button id="trash-post" class="button danger small" type="button">휴지통으로 이동</button></div>');
   $('#unpublish-post').addEventListener('click', async () => {
     const id = $('#post-id').value;
     if (!id || !confirm('이 글을 비공개로 전환할까요? 공개 홈페이지에서는 즉시 숨겨집니다.')) return;
@@ -766,6 +768,7 @@
     $('#current-status').textContent = '새 글';
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
     $('#unpublish-post').classList.add('hidden');
+    $('#editor-trash-card').classList.add('hidden');
     $('#publish-post').textContent = '공개하기';
     updateResearchFields();
     dirty = false;
@@ -875,8 +878,57 @@
     $('#current-status').textContent = statusLabels[post.status] || post.status;
     $('#post-timestamps').textContent = `작성 ${formatDate(post.created_at)} · 수정 ${formatDate(post.updated_at)}`;
     $('#unpublish-post').classList.toggle('hidden', post.status !== 'published');
+    $('#editor-trash-card').classList.toggle('hidden', !post?.id || post.status === 'trashed');
     $('#publish-post').textContent = post.status === 'published' ? '수정 내용 공개' : '공개하기';
   }
+
+  const trashPostConfirmation = '이 글을 휴지통으로 이동하시겠습니까? 공개 화면과 관리자 일반 목록에서는 보이지 않으며, 휴지통에서 복구할 수 있습니다.';
+  const permanentDeleteConfirmation = '이 글을 영구 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?';
+
+  function confirmPostAction(message, confirmLabel) {
+    let dialog = $('#post-action-dialog');
+    if (!dialog) {
+      document.body.insertAdjacentHTML('beforeend', '<dialog id="post-action-dialog" class="confirm-dialog"><form method="dialog"><p id="post-action-message"></p><div class="button-row"><button class="button ghost" value="cancel" type="submit">취소</button><button id="post-action-confirm" class="button danger" value="confirm" type="submit"></button></div></form></dialog>');
+      dialog = $('#post-action-dialog');
+    }
+    $('#post-action-message').textContent = message;
+    $('#post-action-confirm').textContent = confirmLabel;
+    dialog.returnValue = '';
+    dialog.showModal();
+    return new Promise(resolve => dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true }));
+  }
+
+  async function movePostToTrash(id, { leaveEditor = false } = {}) {
+    if (!id) {
+      resetEditor();
+      $('#post-title').focus();
+      return false;
+    }
+    const post = allPosts.find(item => item.id === id);
+    if (!post || post.status === 'trashed') {
+      showToast('이 글을 찾을 수 없거나 이미 휴지통에 있습니다.', true);
+      return false;
+    }
+    if (!await confirmPostAction(trashPostConfirmation, '휴지통으로 이동')) return false;
+    const workingContent = post.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {};
+    workingContent._pre_trash_status = post.status || 'draft';
+    const changes = { status: 'trashed', deleted_at: new Date().toISOString(), working_content: workingContent };
+    const { data, error } = await db.from('posts').update(changes).eq('id', id).eq('status', post.status).select('id').single();
+    if (error || data?.id !== id) {
+      showToast(`휴지통으로 이동하지 못했습니다: ${error?.message || '대상 글을 확인해 주세요.'}`, true);
+      return false;
+    }
+    dirty = false;
+    await loadPosts();
+    if (leaveEditor) {
+      resetEditor();
+      navigate('posts');
+    }
+    showToast('글을 휴지통으로 이동했습니다. 휴지통에서 복구할 수 있습니다.');
+    return true;
+  }
+
+  $('#trash-post').addEventListener('click', () => movePostToTrash($('#post-id').value, { leaveEditor: true }));
 
   $('#editor-cancel').addEventListener('click', () => {
     if (dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 글 목록으로 이동할까요?')) return;
@@ -1001,6 +1053,7 @@
     $('#post-count').textContent = rows.length ? (rows.length + '건') : '';
     const visible = rows.slice(0, visiblePostLimit);
     $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${post.type === 'paper' && post.category === '연구노트' ? '<span class="research-note-badge">연구노트</span>' : ''}${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(post.status === 'draft' ? '임시 저장' : statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $$('#post-table-body [data-action="trash"]').forEach(button => { button.textContent = '휴지통으로 이동'; });
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
   }
@@ -1019,16 +1072,14 @@
       return setTimeout(renderPreview, 80);
     }
     if (action === 'delete-permanently') {
-      const post = allPosts.find(item => item.id === id);
-      if (!confirm('「' + (post?.title || '이 글') + '」을 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+      if (!await confirmPostAction(permanentDeleteConfirmation, '영구 삭제')) return;
       const { error } = await db.from('posts').delete().eq('id', id).eq('status', 'trashed');
       if (error) showToast(error.message, true); else { await loadPosts(); showToast('글을 영구 삭제했습니다.'); }
       return;
     }
-    if (action === 'trash' && !confirm('이 글을 휴지통으로 옮길까요? 나중에 복구할 수 있습니다.')) return;
+    if (action === 'trash') return movePostToTrash(id);
     if (action === 'unpublish' && !confirm('이 글을 비공개로 전환할까요?')) return;
     let changes = null;
-    if (action === 'trash') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; workingContent._pre_trash_status = post?.status || 'draft'; changes = { status: 'trashed', deleted_at: new Date().toISOString(), working_content: workingContent }; }
     if (action === 'restore') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; const restoredStatus = workingContent._pre_trash_status === 'published' ? 'published' : 'draft'; delete workingContent._pre_trash_status; changes = { status: restoredStatus, deleted_at: null, working_content: workingContent }; }
     if (action === 'unpublish') changes = { status: 'draft' };
     if (action === 'publish') {
@@ -1042,7 +1093,7 @@
     if (action === 'toggle-home') changes = { home_featured: !allPosts.find(post => post.id === id)?.home_featured };
     if (!changes) return;
     const { error } = await db.from('posts').update(changes).eq('id', id);
-    if (error) showToast(error.message, true); else { await loadPosts(); showToast(action === 'trash' ? '휴지통으로 옮겼습니다.' : '상태를 변경했습니다.'); }
+    if (error) showToast(error.message, true); else { await loadPosts(); showToast('상태를 변경했습니다.'); }
   });
 
   function renderDashboard() {
