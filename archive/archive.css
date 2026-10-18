@@ -26,7 +26,7 @@
 .compact-list-row{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:22px;align-items:center;min-height:132px;padding:15px 4px;color:var(--ink);text-decoration:none;transition:background-color .18s ease,box-shadow .18s ease}
 .compact-list-row:hover{background:#f2f4f2;box-shadow:0 0 0 7px #f2f4f2}
 .compact-list-row:focus-visible{outline:3px solid rgba(23,57,111,.35);outline-offset:4px}
-.compact-list-copy{min-width:0}
+.compact-list-copy{min-width:0}.compact-title-line{display:flex;align-items:baseline;gap:7px;min-width:0;flex-wrap:nowrap}.compact-title-line .card-kicker{flex:0 0 auto}.compact-title-line h2{flex:1 1 auto;min-width:0}.research-note-badge{display:inline-flex;align-items:center;flex:0 0 auto;padding:2px 5px;border-radius:2px;background:#768a42;color:#fff;font-size:12px;font-weight:800;line-height:1.35;white-space:nowrap;text-shadow:0 1px 1px rgba(36,48,18,.28)}
 .compact-list-item h2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:3px 0 5px;font:700 20px/1.4 var(--sans);word-break:keep-all;overflow-wrap:break-word}
 .compact-list-summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:0 0 6px;color:#46505c;font-size:14px;line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
 .compact-list-meta{margin:0;color:var(--muted);font-size:12px}

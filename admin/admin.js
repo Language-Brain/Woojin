@@ -574,7 +574,7 @@
       published_at: $('#post-date').value || today(),
       home_featured: $('#post-home-featured').checked,
       home_order: Number($('#post-home-order').value) || 0,
-      content_subtype: $('#post-subtype').value,
+      content_subtype: $('#post-type').value === 'paper' ? $('#post-paper-nature').value : $('#post-subtype').value,
       original_title: $('#post-original-title').value.trim(),
       authors: $('#post-authors').value.trim(),
       publication_year: Number($('#post-publication-year').value) || null,
@@ -752,6 +752,7 @@
     $('#post-date').value = today();
     $('#post-type').value = '';
     $('#post-category').value = '';
+    $('#post-paper-nature').value = 'formal_paper';
     $('#post-home-featured').checked = true;
     $('#post-home-order').value = '0';
     if (quill) {
@@ -841,7 +842,8 @@
     $('#post-date').value = working.published_at || today();
     $('#post-home-featured').checked = working.home_featured;
     $('#post-home-order').value = working.home_order;
-    $('#post-subtype').value = working.content_subtype;
+    $('#post-subtype').value = working.type === 'paper' ? '' : working.content_subtype;
+    $('#post-paper-nature').value = working.type === 'paper' && working.content_subtype === 'research_note' ? 'research_note' : 'formal_paper';
     $('#post-original-title').value = working.original_title;
     $('#post-authors').value = working.authors;
     $('#post-publication-year').value = working.publication_year;
@@ -1000,7 +1002,7 @@
     const rows = filteredPosts();
     $('#post-count').textContent = rows.length ? (rows.length + '건') : '';
     const visible = rows.slice(0, visiblePostLimit);
-    $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(post.status === 'draft' ? '임시 저장' : statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${post.type === 'paper' && post.content_subtype === 'research_note' ? '<span class="research-note-badge">연구노트</span>' : ''}${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(post.status === 'draft' ? '임시 저장' : statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
   }
@@ -1090,7 +1092,7 @@
   });
 
   function renderCompact(selector, rows) {
-    $(selector).innerHTML = rows.length ? rows.map(post => `<div class="compact-item ${post.status === 'draft' ? 'post-row-draft' : ''}"><button data-edit-post="${post.id}" type="button">${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span>${escapeText(formatDate(post.updated_at))}</span></div>`).join('') : '<div class="empty-state small">표시할 글이 없습니다.</div>';
+    $(selector).innerHTML = rows.length ? rows.map(post => `<div class="compact-item ${post.status === 'draft' ? 'post-row-draft' : ''}"><button data-edit-post="${post.id}" type="button">${post.type === 'paper' && post.content_subtype === 'research_note' ? '<span class="research-note-badge">연구노트</span>' : ''}${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span>${escapeText(formatDate(post.updated_at))}</span></div>`).join('') : '<div class="empty-state small">표시할 글이 없습니다.</div>';
     $$(`${selector} [data-edit-post]`).forEach(button => button.addEventListener('click', () => openEditor(button.dataset.editPost)));
   }
 
