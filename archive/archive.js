@@ -72,8 +72,9 @@
     const title=row.title||'제목 없는 글';
     const meta=kind==='papers'?[row.authors,row.publication_year,row.journal||row.source].filter(Boolean).join(' · '):[row.publisher||row.source,date(row.article_date||row.published_at)].filter(Boolean).join(' · ');
     const image=row.image_url||row.thumbnail_url||'';
-    const researchBadge=kind==='papers'&&row.content_subtype==='research_note'?'<span class="research-note-badge">연구노트</span>':'';
-    return `<article class="archive-card compact-list-item"><a class="compact-list-row" href="${detailUrl(row)}" aria-label="${esc(title)} 읽기"><div class="compact-list-copy"><div class="compact-title-line">${researchBadge}<span class="card-kicker">[${esc(row.category||settings.title)}]</span><h2>${esc(title)}</h2></div><p class="compact-list-summary">${esc(row._listSummary||emptySummary)}</p><p class="compact-list-meta">${esc(meta||date(row.published_at||row.updated_at||row.created_at))}</p></div><span class="compact-list-thumb">${image?`<img src="${esc(image)}" alt="${esc(row.image_alt||`${title} 대표 이미지`)}" loading="lazy">`:`<span class="compact-list-placeholder" aria-hidden="true">삶과 언어</span>`}</span></a></article>`;
+    const isResearchNote=kind==='papers'&&row.category==='연구노트';
+    const categoryLabel=isResearchNote?'<span class="research-note-badge">연구노트</span>':`<span class="card-kicker">[${esc(row.category||settings.title)}]</span>`;
+    return `<article class="archive-card compact-list-item"><a class="compact-list-row" href="${detailUrl(row)}" aria-label="${esc(title)} 읽기"><div class="compact-list-copy"><div class="compact-title-line">${categoryLabel}<h2>${esc(title)}</h2></div><p class="compact-list-summary">${esc(row._listSummary||emptySummary)}</p><p class="compact-list-meta">${esc(meta||date(row.published_at||row.updated_at||row.created_at))}</p></div><span class="compact-list-thumb">${image?`<img src="${esc(image)}" alt="${esc(row.image_alt||`${title} 대표 이미지`)}" loading="lazy">`:`<span class="compact-list-placeholder" aria-hidden="true">삶과 언어</span>`}</span></a></article>`;
   }
   function card(row){
     if(kind==='works') return workCard(row);
