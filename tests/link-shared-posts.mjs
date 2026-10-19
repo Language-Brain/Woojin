@@ -19,6 +19,8 @@ assert.match(migration, /recent_client_failures >= 5 or recent_total_failures >=
 assert.match(migration, /status = 'published' or public\.is_admin\(\)/);
 assert.match(migration, /shared-post-images/);
 assert.match(migration, /public\.post_shared_assets/);
+assert.match(migration, /grant select on public\.post_shares to service_role/);
+assert.match(migration, /grant select, insert on public\.post_shared_assets to service_role/);
 
 assert.match(admin, /id="share-post"[^>]*>링크 공개/);
 assert.match(admin, /savePost\('shared'\)/);
@@ -30,6 +32,7 @@ assert.match(admin, /stop_post_share/);
 assert.match(admin, /existing\?\.status !== 'shared'/);
 assert.match(admin, /mode === 'draft' && existing\?\.status === 'shared'/);
 assert.match(admin, /postStatusLabels = \{ published: '전체 공개', shared: '링크 공개'/);
+assert.match(admin, /publishedIds\.has\(id\)/);
 
 assert.ok(vercel.rewrites.some(row => row.source === '/shared/article' && row.destination === '/api/shared-article'));
 assert.ok(vercel.rewrites.some(row => row.source === '/shared/image' && row.destination === '/api/shared-image'));

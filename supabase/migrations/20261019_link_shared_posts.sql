@@ -198,6 +198,12 @@ grant execute on function public.enable_post_share(uuid, text, boolean) to authe
 grant execute on function public.stop_post_share(uuid) to authenticated;
 grant execute on function public.resolve_shared_post(text, text, text) to anon, authenticated;
 
+-- 서버 API는 service-role 클라이언트로 공유 문서와 보호 이미지를 읽습니다.
+-- 새 표에는 기본 권한이 자동 상속되지 않을 수 있으므로 명시적으로 부여합니다.
+grant select on public.post_shares to service_role;
+grant select on public.posts to service_role;
+grant select, insert on public.post_shared_assets to service_role;
+
 -- 일반 익명 조회는 전체 공개 글만 허용합니다. 링크 공개 글은 RPC를 통하지 않고 읽을 수 없습니다.
 drop policy if exists "posts_public_read" on public.posts;
 create policy "posts_public_read" on public.posts

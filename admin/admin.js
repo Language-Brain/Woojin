@@ -1330,7 +1330,8 @@
     const cards = [['오늘 조회수', viewRows.filter(row => row.viewed_on === todayValue).length], ['최근 7일', viewRows.filter(row => row.viewed_on >= seven).length], ['누적 조회수', viewRows.length], ['조회된 글', new Set(viewRows.map(row => row.post_id)).size]];
     $('#stats-cards').innerHTML = cards.map(([label, value]) => `<article class="summary-card"><span>${label}</span><strong>${value}</strong><small>${value ? '실제 수집값' : '아직 수집된 통계 없음'}</small></article>`).join('');
     const counts = viewRows.reduce((map, row) => map.set(row.post_id, (map.get(row.post_id) || 0) + 1), new Map());
-    const popular = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+    const publishedIds = new Set(allPosts.filter(post => post.status === 'published').map(post => post.id));
+    const popular = [...counts.entries()].filter(([id]) => publishedIds.has(id)).sort((a, b) => b[1] - a[1]).slice(0, 20);
     $('#popular-posts').innerHTML = popular.length ? popular.map(([id, count], index) => {
       const post = allPosts.find(row => row.id === id);
       const title = escapeText(post?.title || '삭제된 글');
