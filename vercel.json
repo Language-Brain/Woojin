@@ -16,6 +16,8 @@
     { "source": "/", "destination": "/customer/index.html" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/article", "destination": "/api/article" },
+    { "source": "/shared/article", "destination": "/api/shared-article" },
+    { "source": "/shared/image", "destination": "/api/shared-image" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/rss.xml", "destination": "/api/rss" },
     { "source": "/papers", "destination": "/archive/index.html" },
@@ -42,6 +44,14 @@
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
         { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/shared/:path*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" }
       ]
     }
   ]

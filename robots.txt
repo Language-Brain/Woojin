@@ -2,10 +2,12 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Disallow: /shared/
 
 User-agent: Yeti
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Disallow: /shared/
 
 Sitemap: https://literacy-korea.com/sitemap.xml

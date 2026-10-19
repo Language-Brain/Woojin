@@ -9,7 +9,7 @@ const [source, css, html] = await Promise.all([
 
 assert.match(source, /post-row-draft/);
 assert.match(source, /draft-title-badge">임시 저장/);
-assert.match(source, /post\.status === 'draft' \? '임시 저장'/);
+assert.match(source, /postStatusLabels = \{ published: '전체 공개', shared: '링크 공개', draft: '임시 저장'/);
 assert.match(source, /임시 저장되었습니다/);
 assert.match(source, /setSaveState\('저장 실패', 'error'\)/);
 assert.match(css, /\.post-table tr\.post-row-draft\{background:#f0f3e3;box-shadow:inset 4px 0 #7a8748\}/);

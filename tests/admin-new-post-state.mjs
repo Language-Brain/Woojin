@@ -14,7 +14,7 @@ assert.match(source, /button\.dataset\.view === 'editor'\) \{ event\.preventDefa
 assert.match(source, /clearTimeout\(autosaveTimer\);[\s\S]*?autosaveTimer = null;[\s\S]*?currentPost = null/);
 assert.match(source, /quill\.setContents\(\[\], 'silent'\);[\s\S]*?quill\.history\.clear\(\);[\s\S]*?quill\.setSelection\(0, 0, 'silent'\)/);
 assert.match(source, /\$\('#post-id'\)\.value = ''/);
-assert.match(source, /\$\('#publish-post'\)\.textContent = '공개하기'/);
+assert.match(source, /\$\('#publish-post'\)\.textContent = '전체 공개'/);
 assert.match(source, /const session = editorSession/);
 assert.ok((source.match(/session !== editorSession/g) || []).length >= 4, 'stale async saves must not refill a new editor session');
 assert.match(source, /if \(saving\) return/);

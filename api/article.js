@@ -3,7 +3,7 @@ import { SITE_DESCRIPTION, SITE_URL, descriptionFor, escapeHtml, publicArticleUr
 
 const TYPE_LABELS = { paper: '해외 연구 소개', news: '언어, 문해, 인지 관련 기사', works: '글과 해설' };
 
-function safeContent(value) {
+export function safeContent(value) {
   return String(value || '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
@@ -52,7 +52,7 @@ function renderRecommendations(rows) {
   if (!rows?.length) return '';
   return `<section class="recommendations" aria-labelledby="recommendations-heading"><h2 id="recommendations-heading">함께 읽으면 좋은 글</h2><ul>${rows.map(row => `<li><a href="${publicArticleUrl(row.id)}">${escapeHtml(row.title)}</a></li>`).join('')}</ul></section>`;
 }
-function renderArticle(post) {
+export function renderArticle(post, options = {}) {
   const type = TYPE_LABELS[post.type] || '연구 글';
   const body = post.content_html ? safeContent(post.content_html) : `<p>${escapeHtml(post.excerpt || '본문을 준비하고 있습니다.')}</p>`;
   const cleanTags = normalizedTags(post.tags);
@@ -63,7 +63,8 @@ function renderArticle(post) {
   const recommendations = renderRecommendations(post.recommendedPosts);
   const isResearchNote = post.type === 'paper' && post.category === '연구노트';
   const researchBadge = isResearchNote ? '<span class="research-note-badge">연구노트</span>' : '';
-  return `<header class="article-head protected-content" data-server-rendered><div class="wrap"><p class="eyebrow">${escapeHtml(type)}${post.category && !isResearchNote ? ` · ${escapeHtml(post.category)}` : ''}</p><div class="article-title-line">${researchBadge}<h1>${escapeHtml(post.title)}</h1></div>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div></div></header><article class="wrap article-body protected-content" data-public-linkify><div class="reader-text-content" style="--reader-body-size:18px;--reader-h1-size:36px;--reader-h2-size:30px;--reader-h3-size:24px">${gallery}${body}</div>${tags}${copyright}${recommendations}${shareMarkup()}</article>`;
+  const sharedNotice = options.shared ? '<p class="shared-document-notice" role="note">링크로 공유된 문서입니다.</p>' : '';
+  return `<header class="article-head protected-content" data-server-rendered><div class="wrap">${sharedNotice}<p class="eyebrow">${escapeHtml(type)}${post.category && !isResearchNote ? ` · ${escapeHtml(post.category)}` : ''}</p><div class="article-title-line">${researchBadge}<h1>${escapeHtml(post.title)}</h1></div>${post.subtitle ? `<p class="subtitle">${escapeHtml(post.subtitle)}</p>` : ''}${post.excerpt ? `<p class="excerpt">${escapeHtml(post.excerpt)}</p>` : ''}<div class="meta"><time datetime="${escapeHtml(post.article_date || post.published_at || '')}">${escapeHtml(post.article_date || post.published_at || '')}</time><span>최근 수정 ${escapeHtml(new Date(post.updated_at).toLocaleDateString('ko-KR'))}</span></div></div></header><article class="wrap article-body protected-content" data-public-linkify><div class="reader-text-content" style="--reader-body-size:18px;--reader-h1-size:36px;--reader-h2-size:30px;--reader-h3-size:24px">${gallery}${body}</div>${tags}${copyright}${recommendations}${options.shared ? '' : shareMarkup()}</article>`;
 }
 
 export default async function handler(request, response) {

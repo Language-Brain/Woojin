@@ -18,7 +18,8 @@
   const formatDate = value => value ? new Date(value).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
   const escapeText = value => { const node = document.createElement('span'); node.textContent = value ?? ''; return node.innerHTML; };
   const typeLabels = { paper: '논문·연구 소개', news: '뉴스·기사 소개', works: '강의·저서·연구 원고 또는 칼럼', notice: '공지', other: '기타' };
-  const statusLabels = { published: '공개', draft: '비공개·임시', trashed: '휴지통' };
+  const statusLabels = { published: '공개', shared: '링크 공개', draft: '비공개·임시', trashed: '휴지통' };
+  const postStatusLabels = { published: '전체 공개', shared: '링크 공개', draft: '임시 저장', trashed: '휴지통' };
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   const maxFileSize = 8 * 1024 * 1024;
   const normalizeTags = value => {
@@ -52,6 +53,7 @@
   let visiblePostLimit = 20;
   let toastTimer = null;
   let passwordRecoveryMode = recoveryRequested;
+  let currentShare = null;
 
   function showToast(message, error = false) {
     const toast = $('#toast');
@@ -646,14 +648,21 @@
       if (mode !== 'autosave') showToast('제목을 입력해 주세요.', true);
       return;
     }
-    if (mode === 'publish' && !working.type) {
+    if (['publish', 'shared'].includes(mode) && !working.type) {
       showToast('글이 게시될 위치를 결정하려면 글 종류를 선택해 주세요.', true);
       setSaveState('글 종류 선택 필요', 'error');
       $('#post-type').focus();
       return;
     }
+    const sharePasswordInput = $('#share-password').value;
+    const requestedSharePassword = mode === 'shared' && $('#share-password-enabled').checked ? (sharePasswordInput || (currentShare?.password_hash ? null : '')) : '';
+    if (mode === 'shared' && $('#share-password-enabled').checked && requestedSharePassword !== null && requestedSharePassword.length < 6) {
+      showToast('접근 암호를 6자 이상 입력해 주세요.', true);
+      $('#share-password').focus();
+      return;
+    }
     saving = true;
-    ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = true; });
+    ['#save-draft', '#share-post', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = true; });
     setSaveState(mode === 'autosave' ? '자동 저장 중…' : '저장 중…', 'saving');
     try {
       const pendingImages = [
@@ -679,7 +688,11 @@
       if (session !== editorSession) return;
       let id = $('#post-id').value;
       const existing = id ? (allPosts.find(post => post.id === id) || currentPost) : null;
-      const canonicalWrite = !(id && existing?.status === 'published' && mode !== 'publish');
+      const preservesLiveVersion = id && (
+        (existing?.status === 'published' && !['publish', 'shared'].includes(mode)) ||
+        (existing?.status === 'shared' && mode === 'autosave')
+      );
+      const canonicalWrite = !preservesLiveVersion;
       if (canonicalWrite) {
         const storageType = working.type || 'other';
         const refNo = await resolveRefNo(storageType, $('#post-ref').value, id);
@@ -688,7 +701,7 @@
       }
       const writePost = async () => {
         if (id) {
-          if (existing?.status === 'published' && mode !== 'publish') {
+          if (preservesLiveVersion) {
             return db.from('posts').update({ working_content: working }).eq('id', id).select().single();
           }
           return db.from('posts').update(canonicalPayload(working, mode === 'publish' ? 'published' : 'draft')).eq('id', id).select().single();
@@ -705,30 +718,47 @@
       if (result.error) throw result.error;
       if (session !== editorSession) return;
       id = result.data?.id || id;
+      if (mode === 'shared') {
+        const shareResult = await db.rpc('enable_post_share', { target_post: id, access_password: requestedSharePassword, rotate_token: existing?.status !== 'shared' });
+        if (shareResult.error) throw shareResult.error;
+        result.data.status = 'shared';
+        $('#share-password').value = '';
+      } else if (mode === 'publish') {
+        const disableResult = await db.from('post_shares').update({ enabled: false, stopped_at: new Date().toISOString() }).eq('post_id', id);
+        if (disableResult.error) throw disableResult.error;
+      } else if (mode === 'draft' && existing?.status === 'shared') {
+        const disableResult = await db.from('post_shares').update({ enabled: false, stopped_at: new Date().toISOString() }).eq('post_id', id);
+        if (disableResult.error) throw disableResult.error;
+      }
       $('#post-id').value = id;
       currentPost = result.data;
       dirty = false;
       await Promise.all([loadPosts(), loadMedia()]);
       const savedAt = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       history.replaceState(null, '', `/admin?edit=${encodeURIComponent(id)}`);
-      const draftSaved = mode !== 'publish' && result.data.status !== 'published';
-      setSaveState(draftSaved ? `${savedAt} 임시 저장되었습니다` : `${savedAt} 저장 완료`, 'saved');
+      const draftSaved = mode === 'draft' && result.data.status === 'draft';
+      setSaveState(draftSaved ? `${savedAt} 임시 저장되었습니다` : mode === 'shared' ? `${savedAt} 링크 공개 완료` : `${savedAt} 저장 완료`, 'saved');
       updateEditorStatus(result.data);
       if (mode === 'publish') showToast('공개했습니다. 홈페이지에서 확인할 수 있습니다.');
+      else if (mode === 'shared') showToast('링크 공개를 시작했습니다. 공유 링크를 복사할 수 있습니다.');
       else if (mode !== 'autosave') showToast(result.data.status === 'published' ? '편집 초안을 저장했습니다. 공개본은 유지됩니다.' : `${savedAt} 임시 저장되었습니다.`);
     } catch (error) {
       setSaveState('저장 실패', 'error');
       if (mode !== 'autosave') showToast(error?.code === '23505' ? '자료 번호가 겹쳐 저장하지 못했습니다. 잠시 후 다시 저장해 주세요. 편집 내용은 그대로 유지됩니다.' : `저장하지 못했습니다: ${error.message}`, true);
     } finally {
       saving = false;
-      ['#save-draft', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = false; });
+      ['#save-draft', '#share-post', '#publish-post'].forEach(selector => { const button = $(selector); if (button) button.disabled = false; });
     }
   }
 
+  $('#publish-post').textContent = '전체 공개';
+  $('#publish-post').insertAdjacentHTML('beforebegin', '<button id="share-post" class="button secondary" type="button">링크 공개</button>');
   $('#save-draft').addEventListener('click', () => savePost('draft'));
+  $('#share-post').addEventListener('click', () => savePost('shared'));
   $('#publish-post').addEventListener('click', () => savePost('publish'));
   const statusCard = document.querySelector('.status-card');
-  statusCard.insertAdjacentHTML('afterend', '<div id="editor-trash-card" class="meta-card editor-trash-card hidden"><h2>글 정리</h2><p>저장된 글은 휴지통에서 다시 복구할 수 있습니다.</p><button id="trash-post" class="button danger small" type="button">휴지통으로 이동</button></div>');
+  statusCard.insertAdjacentHTML('afterend', '<div id="share-settings-card" class="meta-card share-settings-card hidden"><h2>링크 공개</h2><p id="share-state">공유 링크가 없습니다.</p><p id="share-created" class="post-subline"></p><label class="check-row"><input id="share-password-enabled" type="checkbox"> 접근 암호 사용</label><div id="share-password-field" class="field hidden"><label for="share-password">접근 암호</label><input id="share-password" type="password" minlength="6" maxlength="128" autocomplete="new-password"><small>6자 이상 입력하며 평문으로 저장되지 않습니다.</small></div><div class="share-admin-actions"><button id="copy-share-link" class="button secondary small" type="button">공유 링크 복사</button><button id="rotate-share-link" class="button ghost small" type="button">공유 링크 새로 발급</button><button id="stop-share" class="button danger small" type="button">공유 중지</button></div></div><div id="editor-trash-card" class="meta-card editor-trash-card hidden"><h2>글 정리</h2><p>저장된 글은 휴지통에서 다시 복구할 수 있습니다.</p><button id="trash-post" class="button danger small" type="button">휴지통으로 이동</button></div>');
+  $('#filter-status').querySelector('[value="published"]').insertAdjacentHTML('afterend', '<option value="shared">링크 공개</option>');
   $('#unpublish-post').addEventListener('click', async () => {
     const id = $('#post-id').value;
     if (!id || !confirm('이 글을 비공개로 전환할까요? 공개 홈페이지에서는 즉시 숨겨집니다.')) return;
@@ -769,7 +799,9 @@
     $('#post-timestamps').textContent = '아직 저장되지 않았습니다.';
     $('#unpublish-post').classList.add('hidden');
     $('#editor-trash-card').classList.add('hidden');
-    $('#publish-post').textContent = '공개하기';
+    $('#share-settings-card').classList.add('hidden');
+    $('#publish-post').textContent = '전체 공개';
+    currentShare = null;
     updateResearchFields();
     dirty = false;
     setSaveState('저장 준비');
@@ -875,12 +907,68 @@
   }
 
   function updateEditorStatus(post) {
-    $('#current-status').textContent = statusLabels[post.status] || post.status;
+    $('#current-status').textContent = postStatusLabels[post.status] || post.status;
     $('#post-timestamps').textContent = `작성 ${formatDate(post.created_at)} · 수정 ${formatDate(post.updated_at)}`;
     $('#unpublish-post').classList.toggle('hidden', post.status !== 'published');
     $('#editor-trash-card').classList.toggle('hidden', !post?.id || post.status === 'trashed');
-    $('#publish-post').textContent = post.status === 'published' ? '수정 내용 공개' : '공개하기';
+    $('#share-settings-card').classList.toggle('hidden', !post?.id || post.status === 'trashed');
+    $('#publish-post').textContent = post.status === 'published' ? '수정 내용 전체 공개' : '전체 공개';
+    loadShareForPost(post.id);
   }
+
+  function shareUrl(token) { return token ? `${config.siteUrl || location.origin}/shared/article?token=${encodeURIComponent(token)}` : ''; }
+
+  function renderShareSettings() {
+    const shared = currentPost?.status === 'shared' && currentShare?.enabled;
+    $('#share-state').textContent = shared ? '현재 링크로 공유 중입니다.' : currentPost?.status === 'shared' ? '공유 링크를 확인하고 있습니다.' : '현재 일반 공유 링크는 비활성 상태입니다.';
+    $('#share-created').textContent = currentShare?.created_at ? `링크 생성 ${formatDate(currentShare.created_at)}` : '';
+    $('#share-password-enabled').checked = Boolean(currentShare?.password_hash);
+    $('#share-password-field').classList.toggle('hidden', !$('#share-password-enabled').checked);
+    ['#copy-share-link', '#rotate-share-link', '#stop-share'].forEach(selector => { $(selector).disabled = !shared; });
+  }
+
+  async function loadShareForPost(postId) {
+    currentShare = null;
+    renderShareSettings();
+    if (!postId) return;
+    const { data, error } = await db.from('post_shares').select('post_id,token_value,password_hash,enabled,created_at,rotated_at').eq('post_id', postId).maybeSingle();
+    if (!error && currentPost?.id === postId) { currentShare = data; renderShareSettings(); }
+  }
+
+  $('#share-password-enabled').addEventListener('change', () => {
+    $('#share-password-field').classList.toggle('hidden', !$('#share-password-enabled').checked);
+    if ($('#share-password-enabled').checked) $('#share-password').focus();
+  });
+
+  async function copyCurrentShareLink() {
+    const url = shareUrl(currentShare?.token_value);
+    if (!url) return showToast('먼저 링크 공개를 설정해 주세요.', true);
+    try { await navigator.clipboard.writeText(url); showToast('공유 링크를 복사했습니다.'); }
+    catch { window.prompt('아래 공유 링크를 복사해 주세요.', url); }
+  }
+
+  $('#copy-share-link').addEventListener('click', copyCurrentShareLink);
+  $('#rotate-share-link').addEventListener('click', async () => {
+    const id = $('#post-id').value;
+    if (!id || !await confirmPostAction('공유 링크를 새로 발급하면 이전 링크는 즉시 사용할 수 없습니다. 새로 발급하시겠습니까?', '새로 발급')) return;
+    const inputPassword = $('#share-password').value;
+    const password = $('#share-password-enabled').checked ? (inputPassword || (currentShare?.password_hash ? null : '')) : '';
+    if ($('#share-password-enabled').checked && password !== null && password.length < 6) return showToast('접근 암호를 6자 이상 입력해 주세요.', true);
+    const { data, error } = await db.rpc('enable_post_share', { target_post: id, access_password: password, rotate_token: true });
+    if (error) return showToast(`새 링크를 발급하지 못했습니다: ${error.message}`, true);
+    $('#share-password').value = '';
+    await Promise.all([loadPosts(), loadShareForPost(id)]);
+    showToast('새 공유 링크를 발급했습니다. 이전 링크는 사용할 수 없습니다.');
+  });
+  $('#stop-share').addEventListener('click', async () => {
+    const id = $('#post-id').value;
+    if (!id || !await confirmPostAction('공유를 중지하면 현재 링크로 문서를 열 수 없습니다. 공유를 중지하시겠습니까?', '공유 중지')) return;
+    const { error } = await db.rpc('stop_post_share', { target_post: id });
+    if (error) return showToast(`공유를 중지하지 못했습니다: ${error.message}`, true);
+    await loadPosts();
+    openEditor(id);
+    showToast('공유를 중지하고 임시 저장 상태로 전환했습니다.');
+  });
 
   const trashPostConfirmation = '이 글을 휴지통으로 이동하시겠습니까? 공개 화면과 관리자 일반 목록에서는 보이지 않으며, 휴지통에서 복구할 수 있습니다.';
   const permanentDeleteConfirmation = '이 글을 영구 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?';
@@ -1052,7 +1140,7 @@
     const rows = filteredPosts();
     $('#post-count').textContent = rows.length ? (rows.length + '건') : '';
     const visible = rows.slice(0, visiblePostLimit);
-    $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${post.type === 'paper' && post.category === '연구노트' ? '<span class="research-note-badge">연구노트</span>' : ''}${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(post.status === 'draft' ? '임시 저장' : statusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
+    $('#post-table-body').innerHTML = visible.map(post => `<tr class="${post.status === 'draft' ? 'post-row-draft' : ''}"><td><button class="post-title-button" data-action="edit" data-id="${post.id}" type="button">${post.type === 'paper' && post.category === '연구노트' ? '<span class="research-note-badge">연구노트</span>' : ''}${escapeText(post.title)}${post.status === 'draft' ? '<span class="draft-title-badge">임시 저장</span>' : ''}</button><span class="post-subline">${escapeText(post.ref_no)} · ${escapeText((post.tags || []).join(', '))}${post.home_featured ? ' · 홈 표시' : ''}</span></td><td>${escapeText(typeLabels[post.type] || post.type)}<span class="post-subline">${escapeText(post.category || '카테고리 없음')}</span></td><td><span class="status-badge status-${post.status}">${escapeText(postStatusLabels[post.status] || post.status)}</span>${post.status === 'trashed' ? `<span class="post-subline">이전 상태: ${post.working_content?._pre_trash_status === 'published' ? '공개' : post.working_content?._pre_trash_status === 'draft' ? '임시 저장' : '기록 없음'}</span>` : ''}</td><td>${escapeText(post.published_at || '-')}</td><td>${escapeText(formatDate(post.status === 'trashed' ? post.deleted_at : post.updated_at))}</td><td><span class="thumb-state">${post.image_url ? `<img src="${escapeText(post.image_url)}" alt="">` : '없음'}</span></td><td><div class="row-actions">${post.status === 'trashed' ? `<button class="button small ghost" data-action="preview-trash" data-id="${post.id}" type="button">미리보기</button><button class="button small secondary" data-action="restore" data-id="${post.id}" type="button">복구</button><button class="button small danger" data-action="delete-permanently" data-id="${post.id}" type="button">영구 삭제</button>` : `<button class="button small ghost" data-action="edit" data-id="${post.id}" type="button">수정</button><button class="button small ghost" data-action="preview-live" data-id="${post.id}" type="button">미리보기</button>${post.status === 'published' ? `<button class="button small secondary" data-action="unpublish" data-id="${post.id}" type="button">비공개</button><button class="button small secondary" data-action="toggle-home" data-id="${post.id}" type="button">${post.home_featured ? '홈에서 내리기' : '홈에 표시'}</button>` : `<button class="button small secondary" data-action="publish" data-id="${post.id}" type="button">공개</button>`}<button class="button small danger" data-action="trash" data-id="${post.id}" type="button">휴지통</button>`}</div></td></tr>`).join('');
     $$('#post-table-body [data-action="trash"]').forEach(button => { button.textContent = '휴지통으로 이동'; });
     $('#post-empty').classList.toggle('hidden', rows.length > 0);
     $('#load-more-posts').classList.toggle('hidden', rows.length <= visiblePostLimit);
@@ -1080,7 +1168,7 @@
     if (action === 'trash') return movePostToTrash(id);
     if (action === 'unpublish' && !confirm('이 글을 비공개로 전환할까요?')) return;
     let changes = null;
-    if (action === 'restore') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; const restoredStatus = workingContent._pre_trash_status === 'published' ? 'published' : 'draft'; delete workingContent._pre_trash_status; changes = { status: restoredStatus, deleted_at: null, working_content: workingContent }; }
+    if (action === 'restore') { const post = allPosts.find(item => item.id === id); const workingContent = post?.working_content && typeof post.working_content === 'object' ? { ...post.working_content } : {}; const restoredStatus = ['published', 'shared'].includes(workingContent._pre_trash_status) ? workingContent._pre_trash_status : 'draft'; delete workingContent._pre_trash_status; changes = { status: restoredStatus, deleted_at: null, working_content: workingContent }; }
     if (action === 'unpublish') changes = { status: 'draft' };
     if (action === 'publish') {
       const post = allPosts.find(item => item.id === id);
@@ -1093,7 +1181,10 @@
     if (action === 'toggle-home') changes = { home_featured: !allPosts.find(post => post.id === id)?.home_featured };
     if (!changes) return;
     const { error } = await db.from('posts').update(changes).eq('id', id);
-    if (error) showToast(error.message, true); else { await loadPosts(); showToast('상태를 변경했습니다.'); }
+    if (error) showToast(error.message, true); else {
+      if (action === 'publish') await db.from('post_shares').update({ enabled: false, stopped_at: new Date().toISOString() }).eq('post_id', id);
+      await loadPosts(); showToast('상태를 변경했습니다.');
+    }
   });
 
   function renderDashboard() {
@@ -1103,6 +1194,7 @@
     const cards = [
       ['전체 글', active.length, '휴지통 제외'],
       ['공개 글', active.filter(post => post.status === 'published').length, '방문자에게 보임'],
+      ['링크 공개', active.filter(post => post.status === 'shared').length, '링크를 받은 사람만'],
       ['비공개·임시', drafts.length, '관리자만 확인'],
       ['휴지통', allPosts.filter(post => post.status === 'trashed').length, '눌러서 확인·복구', 'trash']
     ];
