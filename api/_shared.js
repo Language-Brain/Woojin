@@ -94,6 +94,18 @@ export async function authorizedSharedAsset(token, assetId) {
   return assets[0] || null;
 }
 
+export async function authorizedSharedPost(token) {
+  if (!SERVICE_KEY) return null;
+  const shares = await serviceRows('post_shares', `select=post_id,enabled&token_value=eq.${encodeURIComponent(token)}&limit=1`);
+  const share = shares[0];
+  if (!share?.enabled) return null;
+  const posts = await serviceRows('posts', `select=*&id=eq.${encodeURIComponent(share.post_id)}&status=eq.shared&limit=1`);
+  if (!posts[0]) return null;
+  delete posts[0].working_content;
+  delete posts[0].created_by;
+  return posts[0];
+}
+
 export async function fetchPrivateSharedAsset(path) {
   return fetch(`${SUPABASE_URL}/storage/v1/object/shared-post-images/${encodePath(path)}`, { headers: serviceHeaders() });
 }

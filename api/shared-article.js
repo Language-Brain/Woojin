@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import articleTemplate from './article-template.js';
 import { renderArticle } from './article.js';
 import { escapeHtml, supabaseRpc } from './_seo.js';
-import { protectSharedImages, setSharedAccessCookie } from './_shared.js';
+import { authorizedSharedPost, hasSharedAccessCookie, protectSharedImages, setSharedAccessCookie } from './_shared.js';
 
 const tokenPattern = /^[A-Za-z0-9_-]{40,64}$/;
 
@@ -58,6 +58,13 @@ export default async function handler(request, response) {
   }
 
   try {
+    if (hasSharedAccessCookie(request, token)) {
+      const continuedPost = await authorizedSharedPost(token);
+      if (continuedPost) {
+        const protectedPost = await protectSharedImages(continuedPost, token);
+        return response.status(200).send(renderShared(protectedPost));
+      }
+    }
     const result = await supabaseRpc('resolve_shared_post', {
       supplied_token: token,
       supplied_password: passwordFrom(request),

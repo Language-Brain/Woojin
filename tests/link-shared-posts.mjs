@@ -48,6 +48,8 @@ assert.match(sharedHelpers, /shared-post-images/);
 assert.match(sharedHelpers, /lb_shared_access/);
 assert.match(sharedHelpers, /timingSafeEqual/);
 assert.match(sharedHelpers, /post_shared_assets/);
+assert.match(sharedHelpers, /authorizedSharedPost/);
+assert.match(sharedApi, /hasSharedAccessCookie\(request, token\)/);
 
 const sharedMarkup = renderArticle({
   id: '00000000-0000-0000-0000-000000000000', type: 'works', category: '', title: '내부 원고',
