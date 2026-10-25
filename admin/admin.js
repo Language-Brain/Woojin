@@ -380,9 +380,6 @@
     const backgroundLabel = document.querySelector('.ql-background .ql-picker-label');
     if (colorLabel && !colorLabel.querySelector('.current-color-line')) colorLabel.append(Object.assign(document.createElement('span'), { className: 'current-color-line' }));
     if (backgroundLabel && !backgroundLabel.querySelector('.current-background-box')) backgroundLabel.append(Object.assign(document.createElement('span'), { className: 'current-background-box' }));
-    const colorStatus = Object.assign(document.createElement('p'), { className: 'ql-color-status' });
-    colorStatus.setAttribute('aria-live', 'polite');
-    document.querySelector('#toolbar').append(colorStatus);
     setupColorPicker('.ql-color', textColorNames, '기본 글자색으로 되돌리기');
     setupColorPicker('.ql-background', backgroundColorNames, '음영 없음');
     const colorPickers = [...document.querySelectorAll('#toolbar .ql-color-picker')];
@@ -422,9 +419,6 @@
       if (backgroundLabel) { backgroundLabel.style.setProperty('--current-background', background); backgroundLabel.title = backgroundState.mixed ? '현재 음영색: 혼합된 색상' : `현재 음영색: ${readableColorName(backgroundState.value, backgroundColorNames, '사용자 음영색')}`; backgroundLabel.setAttribute('aria-label', backgroundLabel.title); }
       updatePickerSelection('.ql-color', colorState);
       updatePickerSelection('.ql-background', backgroundState);
-      const colorSummary = colorState.mixed ? '현재 글자색: 혼합된 색상' : (colorLabel?.title || '현재 글자색: 기본 글자색');
-      const backgroundSummary = backgroundState.mixed ? '현재 음영색: 혼합된 색상' : (backgroundLabel?.title || '현재 음영색: 음영 없음');
-      colorStatus.textContent = `${colorSummary} · ${backgroundSummary}`;
     }
     quill.on('text-change', (_delta, _old, source) => {
       if (source === 'user') markDirty();
