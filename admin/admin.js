@@ -320,7 +320,7 @@
     Font.whitelist = ['noto-sans', 'nanum-gothic', 'system-sans'];
     Quill.register(Font, true);
     const Size = Quill.import('attributors/class/size');
-    Size.whitelist = ['body', 'large', 'xlarge'];
+    Size.whitelist = ['small', 'body', 'large', 'xlarge'];
     Quill.register(Size, true);
     const BaseImage = Quill.import('formats/image');
     class AccessibleImage extends BaseImage {
@@ -351,22 +351,61 @@
       if (picker) picker.setAttribute('aria-label', label);
       if (pickerLabel) { pickerLabel.title = label; pickerLabel.setAttribute('aria-label', label); }
     });
-    function updateColorIndicators(format = {}) {
-      const color = format.color || '#172033';
-      const background = format.background || '#ffffff';
-      const colorLabel = document.querySelector('.ql-color .ql-picker-label');
-      const backgroundLabel = document.querySelector('.ql-background .ql-picker-label');
-      if (colorLabel) { colorLabel.style.backgroundColor = color; colorLabel.style.borderColor = '#8f98a4'; colorLabel.title = `글자색: ${color}`; }
-      if (backgroundLabel) { backgroundLabel.style.background = `linear-gradient(135deg, ${background} 0 70%, #fff 70%)`; backgroundLabel.style.borderColor = '#8f98a4'; backgroundLabel.title = `강조색: ${background}`; }
+    const textColorNames = new Map([['', '기본 글자색'],['#172033','먹색 남색'],['#2f3337','진회색'],['#565b61','중간 회색'],['#6b7075','부드러운 회색'],['#24364b','짙은 남색'],['#315b7d','차분한 청색'],['#24605f','짙은 청록색'],['#355b3b','어두운 녹색'],['#66723a','올리브 녹색'],['#7a5a35','황토빛 갈색'],['#704035','적갈색'],['#65445f','차분한 자주색'],['#7a3842','짙은 자주색']]);
+    const backgroundColorNames = new Map([['', '음영 없음'],['#eef0f2','연회색'],['#f1eadc','옅은 베이지색'],['#fff2b8','옅은 노란색'],['#e6edc9','옅은 연두색'],['#dcefeb','옅은 청록색'],['#dcecf5','옅은 하늘색'],['#f4dfe2','옅은 분홍색'],['#e9e1f1','옅은 보라색']]);
+    const normalizeColor = value => String(value || '').trim().toLowerCase();
+    const readableColorName = (value, names, fallback) => names.get(normalizeColor(value)) || `${fallback} (${value})`;
+    const formatValueAcrossSelection = (range, key) => {
+      if (!range || !range.length) return { value: normalizeColor(quill.getFormat(range || undefined)[key]), mixed: false };
+      const values = new Set();
+      quill.getContents(range.index, range.length).ops.forEach(op => { if (typeof op.insert === 'string' && op.insert.replace(/\n/g, '')) values.add(normalizeColor(op.attributes?.[key])); });
+      return values.size > 1 ? { value: '', mixed: true } : { value: [...values][0] || '', mixed: false };
+    };
+    const setupColorPicker = (selector, names, emptyLabel) => {
+      const picker = document.querySelector(selector);
+      if (!picker) return;
+      picker.querySelectorAll('.ql-picker-item').forEach(item => {
+        const value = normalizeColor(item.dataset.value);
+        const name = names.get(value) || value || emptyLabel;
+        item.title = value ? `${name} · ${value}` : emptyLabel;
+        item.setAttribute('aria-label', item.title);
+      });
+    };
+    const colorLabel = document.querySelector('.ql-color .ql-picker-label');
+    const backgroundLabel = document.querySelector('.ql-background .ql-picker-label');
+    if (colorLabel && !colorLabel.querySelector('.current-color-line')) colorLabel.append(Object.assign(document.createElement('span'), { className: 'current-color-line' }));
+    if (backgroundLabel && !backgroundLabel.querySelector('.current-background-box')) backgroundLabel.append(Object.assign(document.createElement('span'), { className: 'current-background-box' }));
+    const colorStatus = Object.assign(document.createElement('p'), { className: 'ql-color-status' });
+    colorStatus.setAttribute('aria-live', 'polite');
+    document.querySelector('#toolbar').append(colorStatus);
+    setupColorPicker('.ql-color', textColorNames, '기본 글자색으로 되돌리기');
+    setupColorPicker('.ql-background', backgroundColorNames, '음영 없음');
+    function updatePickerSelection(selector, state) {
+      const picker = document.querySelector(selector);
+      picker?.classList.toggle('format-mixed', state.mixed);
+      picker?.querySelectorAll('.ql-picker-item').forEach(item => item.classList.toggle('ql-selected', !state.mixed && normalizeColor(item.dataset.value) === state.value));
+    }
+    function updateColorIndicators(range = quill.getSelection()) {
+      const colorState = formatValueAcrossSelection(range, 'color');
+      const backgroundState = formatValueAcrossSelection(range, 'background');
+      const color = colorState.value || '#172033';
+      const background = backgroundState.value || '#ffffff';
+      if (colorLabel) { colorLabel.style.setProperty('--current-color', color); colorLabel.title = colorState.mixed ? '현재 글자색: 혼합된 색상' : `현재 글자색: ${readableColorName(colorState.value, textColorNames, '사용자 색상')}`; colorLabel.setAttribute('aria-label', colorLabel.title); }
+      if (backgroundLabel) { backgroundLabel.style.setProperty('--current-background', background); backgroundLabel.title = backgroundState.mixed ? '현재 음영색: 혼합된 색상' : `현재 음영색: ${readableColorName(backgroundState.value, backgroundColorNames, '사용자 음영색')}`; backgroundLabel.setAttribute('aria-label', backgroundLabel.title); }
+      updatePickerSelection('.ql-color', colorState);
+      updatePickerSelection('.ql-background', backgroundState);
+      const colorSummary = colorState.mixed ? '현재 글자색: 혼합된 색상' : (colorLabel?.title || '현재 글자색: 기본 글자색');
+      const backgroundSummary = backgroundState.mixed ? '현재 음영색: 혼합된 색상' : (backgroundLabel?.title || '현재 음영색: 음영 없음');
+      colorStatus.textContent = `${colorSummary} · ${backgroundSummary}`;
     }
     quill.on('text-change', (_delta, _old, source) => {
       if (source === 'user') markDirty();
-      if (quill.hasFocus()) updateColorIndicators(quill.getFormat());
+      if (quill.hasFocus()) updateColorIndicators(quill.getSelection());
     });
     quill.on('selection-change', range => {
-      if (range) updateColorIndicators(quill.getFormat(range));
+      if (range) updateColorIndicators(range);
     });
-    updateColorIndicators({});
+    updateColorIndicators(null);
   }
 
   function markDirty() {

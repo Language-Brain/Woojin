@@ -15,7 +15,7 @@ assert.match(css, /#popular-posts\{width:min\(100%,920px\)\}/);
 assert.match(css, /\.popular-item\{[^}]*grid-template-columns:32px minmax\(0,1fr\) minmax\(78px,96px\)/);
 assert.match(css, /\.popular-title\{[^}]*text-overflow:ellipsis;white-space:nowrap/);
 assert.match(css, /\.popular-count\{[^}]*white-space:nowrap;font-variant-numeric:tabular-nums/);
-assert.match(html, /admin\.js\?v=popular-posts-20261015-1/);
-assert.match(html, /admin\.css\?v=popular-posts-20261015-1/);
+assert.match(html, /admin\.js\?v=editor-palette-20261025-1/);
+assert.match(html, /admin\.css\?v=editor-palette-20261025-1/);
 
 console.log('admin popular posts: PASS');
