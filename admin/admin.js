@@ -351,8 +351,8 @@
       if (picker) picker.setAttribute('aria-label', label);
       if (pickerLabel) { pickerLabel.title = label; pickerLabel.setAttribute('aria-label', label); }
     });
-    const textColorNames = new Map([['', '기본 글자색'],['#172033','먹색 남색'],['#2f3337','진회색'],['#565b61','중간 회색'],['#6b7075','부드러운 회색'],['#24364b','짙은 남색'],['#315b7d','차분한 청색'],['#24605f','짙은 청록색'],['#355b3b','어두운 녹색'],['#66723a','올리브 녹색'],['#7a5a35','황토빛 갈색'],['#704035','적갈색'],['#65445f','차분한 자주색'],['#7a3842','짙은 자주색']]);
-    const backgroundColorNames = new Map([['', '음영 없음'],['#eef0f2','연회색'],['#f1eadc','옅은 베이지색'],['#fff2b8','옅은 노란색'],['#e6edc9','옅은 연두색'],['#dcefeb','옅은 청록색'],['#dcecf5','옅은 하늘색'],['#f4dfe2','옅은 분홍색'],['#e9e1f1','옅은 보라색']]);
+    const textColorNames = new Map([['', '기본 글자색'],['#111827','검정'],['#374151','진회색'],['#6b7280','중간 회색'],['#b42318','빨강'],['#c45113','주황'],['#966515','황토색'],['#2f6b3b','녹색'],['#0f766e','청록색'],['#1d4ed8','파랑'],['#173b63','짙은 남색'],['#6b3f74','보라색'],['#7f2929','적갈색'],['#8a4b18','갈색'],['#68752a','올리브색'],['#24552e','짙은 녹색'],['#175a61','짙은 청록색'],['#254f86','차분한 청색'],['#3f356f','짙은 보라색']]);
+    const backgroundColorNames = new Map([['', '음영 없음'],['#e5e7eb','연회색'],['#efe5d2','베이지색'],['#ffefad','옅은 노란색'],['#f8d9b5','옅은 주황색'],['#dce8b7','옅은 연두색'],['#cfe8df','옅은 청록색'],['#cfe4f3','옅은 하늘색'],['#f3d4d9','옅은 분홍색'],['#e4d8ef','옅은 보라색']]);
     const normalizeColor = value => String(value || '').trim().toLowerCase();
     const readableColorName = (value, names, fallback) => names.get(normalizeColor(value)) || `${fallback} (${value})`;
     const formatValueAcrossSelection = (range, key) => {
@@ -369,6 +369,11 @@
         const name = names.get(value) || value || emptyLabel;
         item.title = value ? `${name} · ${value}` : emptyLabel;
         item.setAttribute('aria-label', item.title);
+        if (value) {
+          const rgb = value.match(/[\da-f]{2}/gi)?.map(part => Number.parseInt(part, 16)) || [];
+          const luminance = rgb.length === 3 ? (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 : 0;
+          item.dataset.light = luminance > 155 ? 'true' : 'false';
+        }
       });
     };
     const colorLabel = document.querySelector('.ql-color .ql-picker-label');
@@ -380,6 +385,29 @@
     document.querySelector('#toolbar').append(colorStatus);
     setupColorPicker('.ql-color', textColorNames, '기본 글자색으로 되돌리기');
     setupColorPicker('.ql-background', backgroundColorNames, '음영 없음');
+    const colorPickers = [...document.querySelectorAll('#toolbar .ql-color-picker')];
+    let lastEditorRange = null;
+    const closeColorPickers = except => colorPickers.forEach(picker => { if (picker !== except) picker.classList.remove('ql-expanded'); });
+    const positionColorPicker = picker => {
+      const options = picker?.querySelector('.ql-picker-options');
+      if (!options || !picker.classList.contains('ql-expanded')) return;
+      options.style.left = '0'; options.style.right = 'auto'; options.style.top = '100%'; options.style.bottom = 'auto';
+      const box = options.getBoundingClientRect();
+      if (box.right > innerWidth - 8) { options.style.left = 'auto'; options.style.right = '0'; }
+      if (box.bottom > innerHeight - 8 && picker.getBoundingClientRect().top > box.height) { options.style.top = 'auto'; options.style.bottom = '100%'; }
+    };
+    document.querySelector('#toolbar').addEventListener('pointerdown', () => { lastEditorRange = quill.getSelection() || lastEditorRange; });
+    document.addEventListener('click', event => {
+      const picker = event.target.closest?.('#toolbar .ql-color-picker');
+      if (!picker) { closeColorPickers(); return; }
+      closeColorPickers(picker);
+      requestAnimationFrame(() => positionColorPicker(picker));
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeColorPickers(); });
+    document.querySelector('#toolbar').addEventListener('click', event => {
+      if (!event.target.closest('.ql-color-picker')) closeColorPickers();
+    });
+    closeColorPickers();
     function updatePickerSelection(selector, state) {
       const picker = document.querySelector(selector);
       picker?.classList.toggle('format-mixed', state.mixed);
@@ -400,10 +428,11 @@
     }
     quill.on('text-change', (_delta, _old, source) => {
       if (source === 'user') markDirty();
-      if (quill.hasFocus()) updateColorIndicators(quill.getSelection());
+      if (source === 'user') closeColorPickers();
+      if (quill.hasFocus()) updateColorIndicators(quill.getSelection() || lastEditorRange);
     });
     quill.on('selection-change', range => {
-      if (range) updateColorIndicators(range);
+      if (range) { lastEditorRange = range; updateColorIndicators(range); }
     });
     updateColorIndicators(null);
   }

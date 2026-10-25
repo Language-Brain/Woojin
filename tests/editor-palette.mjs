@@ -10,8 +10,8 @@ const [html, css, js, shared] = await Promise.all([
 ]);
 
 assert.match(html, /<option value="small">작은 글씨<\/option>/);
-assert.match(html, /class="ql-color"[^>]*>[\s\S]*value="#24364b"/);
-assert.match(html, /class="ql-background"[^>]*>[\s\S]*value="#fff2b8"/);
+assert.match(html, /class="ql-color"[^>]*>[\s\S]*value="#1d4ed8"/);
+assert.match(html, /class="ql-background"[^>]*>[\s\S]*value="#ffefad"/);
 assert.match(js, /Size\.whitelist = \['small', 'body', 'large', 'xlarge'\]/);
 assert.match(js, /현재 글자색: 혼합된 색상/);
 assert.match(js, /현재 음영색: 혼합된 색상/);
@@ -20,7 +20,7 @@ assert.match(js, /current-color-line/);
 assert.match(js, /current-background-box/);
 assert.match(css, /\.ql-editor \.ql-size-small,.article-preview \.ql-size-small\{font-size:max\(\.8em,14px\);line-height:1\.75\}/);
 assert.match(css, /\.ql-picker-item\.ql-selected::after\{content:'✓'/);
-assert.match(css, /grid-template-columns:repeat\(5,30px\)/);
+assert.match(css, /grid-template-columns:repeat\(6,32px\)/);
 assert.match(shared, /\.article-body \.ql-size-small\{font-size:max\(\.8em,14px\)/);
 
 const markup = renderArticle({
